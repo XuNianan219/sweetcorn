@@ -1,15 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_VIDEOS, MOCK_ARTICLES } from '../constants';
-import { Play, BookOpen, Hash, ArrowLeft } from 'lucide-react';
+import { StorageService } from '../services/storage';
+import { Play, BookOpen, Hash, ArrowLeft, ImageIcon } from 'lucide-react';
 
 export const TagResults: React.FC = () => {
   const { tagName } = useParams<{ tagName: string }>();
-  const [activeTab, setActiveTab] = useState<'video' | 'article'>('video');
+  const decodedTag = decodeURIComponent(tagName || '').replace(/^#/, '');
+  const normalizedTag = decodedTag.toLowerCase();
+  const [activeTab, setActiveTab] = useState<'video' | 'photo' | 'article'>('video');
 
-  const filteredVideos = MOCK_VIDEOS.filter(v => v.tags.includes(tagName || ''));
-  const filteredArticles = MOCK_ARTICLES.filter(a => a.tags.includes(tagName || ''));
+  const filteredVideos = useMemo(
+    () => StorageService.getVideos().filter((item) => item.tags.some((tag) => tag.replace(/^#/, '').toLowerCase() === normalizedTag)),
+    [normalizedTag]
+  );
+  const filteredPhotos = useMemo(
+    () => StorageService.getPhotos().filter((item) => item.tags.some((tag) => tag.replace(/^#/, '').toLowerCase() === normalizedTag)),
+    [normalizedTag]
+  );
+  const filteredArticles = useMemo(
+    () => StorageService.getArticles().filter((item) => item.tags.some((tag) => tag.replace(/^#/, '').toLowerCase() === normalizedTag)),
+    [normalizedTag]
+  );
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -19,7 +31,7 @@ export const TagResults: React.FC = () => {
         </Link>
         <div className="flex items-center gap-2 px-6 py-2 gradient-ningyuzhi rounded-full text-green-900 font-black shadow-sm">
           <Hash size={20} />
-          <span className="text-xl">{tagName}</span>
+          <span className="text-xl">{decodedTag}</span>
         </div>
         <div className="w-20" /> {/* Spacer */}
       </div>
@@ -30,6 +42,12 @@ export const TagResults: React.FC = () => {
           className={`px-8 py-4 font-black text-lg transition-all ${activeTab === 'video' ? 'text-green-600 border-b-4 border-green-600' : 'text-gray-400 hover:text-gray-600'}`}
         >
           相关视频 ({filteredVideos.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('photo')}
+          className={`px-8 py-4 font-black text-lg transition-all ${activeTab === 'photo' ? 'text-green-600 border-b-4 border-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          相关图片 ({filteredPhotos.length})
         </button>
         <button
           onClick={() => setActiveTab('article')}
@@ -43,7 +61,7 @@ export const TagResults: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredVideos.length > 0 ? filteredVideos.map(vid => (
             <div key={vid.id} className="relative aspect-[3/4.5] bg-gray-200 rounded-3xl overflow-hidden group shadow-md hover:shadow-xl transition-all">
-              <img src={vid.cover} className="w-full h-full object-cover" />
+              <img src={vid.cover} className="w-full h-full object-cover" alt={vid.title} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Play fill="white" size={40} className="text-white" />
@@ -55,6 +73,24 @@ export const TagResults: React.FC = () => {
             </div>
           )) : (
             <div className="col-span-full py-20 text-center text-gray-400 italic">暂无相关视频</div>
+          )}
+        </div>
+      ) : activeTab === 'photo' ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredPhotos.length > 0 ? filteredPhotos.map(photo => (
+            <div key={photo.id} className="relative aspect-[3/4.5] bg-gray-200 rounded-3xl overflow-hidden group shadow-md hover:shadow-xl transition-all">
+              <img src={photo.url} className="w-full h-full object-cover" alt={photo.title} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <ImageIcon size={36} className="text-white" />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                <h3 className="font-bold truncate">{photo.title}</h3>
+                <p className="text-xs opacity-70">@{photo.author}</p>
+              </div>
+            </div>
+          )) : (
+            <div className="col-span-full py-20 text-center text-gray-400 italic">暂无相关图片</div>
           )}
         </div>
       ) : (

@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { StorageService, TEST_USERS } from '../services/storage';
-import { ShieldCheck, User as UserIcon, Lock, AlertCircle } from 'lucide-react';
+import { AlertCircle, Lock, ShieldCheck, User as UserIcon } from 'lucide-react';
+import { StorageService } from '../services/storage';
 
 export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -12,14 +11,14 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const foundUser = TEST_USERS.find(u => u.username === username);
+    const foundUser = StorageService.getUsers().find((item) => item.username === username);
     if (foundUser && password === '123456') {
       StorageService.setCurrentUser(foundUser);
       onLogin();
-      navigate('/'); // Ensure navigation to home page after login
-    } else {
-      setError('用户名或密码错误，或不在名额限制内');
+      navigate('/');
+      return;
     }
+    setError('用户名或密码错误');
   };
 
   return (
@@ -29,16 +28,18 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div className="w-20 h-20 gradient-ningyuzhi rounded-3xl mx-auto flex items-center justify-center text-green-900 mb-6 shadow-lg">
             <ShieldCheck size={40} />
           </div>
-          <h2 className="text-3xl font-black text-gray-900">甜玉米 · 成员登录</h2>
-          <p className="mt-2 text-sm text-gray-500 font-medium italic">此空间实行实名管理，请使用内部分配账号</p>
+          <h2 className="text-3xl font-black text-gray-900">成员登录</h2>
+          <p className="mt-2 text-sm text-gray-500 font-medium italic">演示账号：admin、user1、user2、user3、user4</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold flex items-center gap-2 border border-red-100">
-              <AlertCircle size={16} /> {error}
+              <AlertCircle size={16} />
+              {error}
             </div>
           )}
+
           <div className="space-y-4">
             <div className="relative">
               <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -48,7 +49,7 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-400 font-medium"
-                placeholder="用户名 (user1-user5)"
+                placeholder="用户名"
               />
             </div>
             <div className="relative">
@@ -59,24 +60,15 @@ export const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-400 font-medium"
-                placeholder="登录密码"
+                placeholder="密码（123456）"
               />
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="w-full py-4 gradient-ningyuzhi text-green-900 font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
-          >
-            开启乐园之旅
+          <button type="submit" className="w-full py-4 gradient-ningyuzhi text-green-900 font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all">
+            登录
           </button>
         </form>
-
-        <div className="text-center">
-          <p className="text-xs text-gray-400 font-medium">
-            名额剩余: <span className="text-green-600">5 / 5</span>
-          </p>
-        </div>
       </div>
     </div>
   );

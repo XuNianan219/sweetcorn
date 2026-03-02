@@ -1,7 +1,19 @@
-
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home as HomeIcon, MessageCircle, PlayCircle, BookOpen, ShoppingBag, Calendar, User, Heart, MapPin, Mic, Image as ImageIcon, LogOut, Trash2, Package } from 'lucide-react';
+import {
+  BookOpen,
+  Calendar,
+  Clapperboard,
+  Heart,
+  Home as HomeIcon,
+  MapPin,
+  MessageCircle,
+  Mic,
+  Package,
+  ShoppingBag,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { StorageService } from '../services/storage';
 
 const navItems = [
@@ -10,28 +22,38 @@ const navItems = [
   { path: '/celeb-a', label: '梓渝', icon: User },
   { path: '/celeb-b', label: '田栩宁', icon: User },
   { path: '/discussion', label: '讨论区', icon: MessageCircle },
-  { path: '/video', label: '视频区', icon: PlayCircle },
-  { path: '/photo', label: '图片区', icon: ImageIcon },
+  { path: '/media', label: '影像区', icon: Clapperboard },
   { path: '/article', label: '文章区', icon: BookOpen },
   { path: '/commercial', label: '商务区', icon: ShoppingBag },
-  { path: '/merch', label: '饭制周边', icon: Package },
+  { path: '/merch', label: '周边', icon: Package },
   { path: '/activity', label: '活动区', icon: Calendar },
   { path: '/tourism', label: '旅游推荐', icon: MapPin },
+  { path: '/account', label: '账号管理', icon: User },
 ];
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLiveOpen, setIsLiveOpen] = useState(false);
+  const [userVersion, setUserVersion] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const isLanding = location.pathname === '/';
+
+  const currentUser = StorageService.getCurrentUser();
+  const isAdmin = StorageService.isAdmin(currentUser?.id);
+  const users = StorageService.getUsers();
 
   const handleLogout = () => {
     StorageService.setCurrentUser(null);
     window.location.reload();
   };
 
-  const currentUser = StorageService.getCurrentUser();
-  const isAdmin = StorageService.isAdmin(currentUser?.id);
+  const handleUserSwitch = (userId: string) => {
+    if (!isAdmin) return;
+    const user = users.find((item) => item.id === userId);
+    if (!user) return;
+    StorageService.setCurrentUser(user);
+    setUserVersion((prev) => prev + 1);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fcf9e8]">
@@ -41,9 +63,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
               <div className="w-8 h-8 rounded-full gradient-ningyuzhi shadow-sm" />
             </div>
-            
-            <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 overflow-x-auto pb-1 custom-scrollbar">
-              {navItems.map(item => (
+
+            <nav key={userVersion} className="hidden md:flex items-center space-x-1 lg:space-x-2 overflow-x-auto pb-1 custom-scrollbar">
+              {navItems.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
@@ -57,7 +79,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <span>{item.label}</span>
                 </NavLink>
               ))}
-              
+
               {isAdmin && (
                 <NavLink
                   to="/admin-recycle"
@@ -74,21 +96,41 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
               <div className="h-6 w-px bg-gray-200 mx-2" />
               <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full text-green-700 text-xs font-bold whitespace-nowrap">
-                <User size={12} /> {currentUser?.realName}
+                <User size={12} />
+                <span>{currentUser?.realName}</span>
+                <span className="text-[10px] text-green-500">({isAdmin ? '管理员' : '普通用户'})</span>
               </div>
+
+              {isAdmin && (
+                <select
+                  value={currentUser?.id}
+                  onChange={(e) => handleUserSwitch(e.target.value)}
+                  className="text-xs font-bold bg-white border border-green-100 rounded-full px-3 py-1.5 text-green-700 outline-none"
+                  title="管理员切换用户视角"
+                >
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.realName}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200"
+              >
+                退出
+              </button>
             </nav>
           </div>
         </div>
       </header>
 
-      <main className={`flex-grow ${isLanding ? '' : 'max-w-7xl mx-auto w-full px-4 py-8'}`}>
-        {children}
-      </main>
+      <main className={`flex-grow ${isLanding ? '' : 'max-w-7xl mx-auto w-full px-4 py-8'}`}>{children}</main>
 
       <footer className="bg-white py-8 border-t border-[#E2F7C1]">
-        <div className="text-center text-gray-400 text-sm font-medium">
-          © 2026 甜玉米 CP 应援站 | 蓬勃生长
-        </div>
+        <div className="text-center text-gray-400 text-sm font-medium">© 2026 甜玉米 CP 应援站</div>
       </footer>
 
       <button
@@ -108,14 +150,12 @@ const LiveAssistant: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     <div className="fixed bottom-24 right-8 w-80 bg-white rounded-2xl shadow-2xl border border-green-100 p-4 z-50">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-bold text-green-800">玉米小助手</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-red-500">×</button>
+        <button onClick={onClose} className="text-gray-400 hover:text-red-500">
+          ×
+        </button>
       </div>
-      <div className="h-48 bg-gray-50 rounded-lg mb-4 flex items-center justify-center p-4 text-center text-sm text-gray-500">
-        已就绪，正在聆听您的心声...
-      </div>
-      <button className="w-full py-2 gradient-ningyuzhi text-green-900 font-bold rounded-full shadow-sm">
-        开始通话
-      </button>
+      <div className="h-48 bg-gray-50 rounded-lg mb-4 flex items-center justify-center p-4 text-center text-sm text-gray-500">已就绪，正在聆听你的想法。</div>
+      <button className="w-full py-2 gradient-ningyuzhi text-green-900 font-bold rounded-full shadow-sm">开始通话</button>
     </div>
   );
 };

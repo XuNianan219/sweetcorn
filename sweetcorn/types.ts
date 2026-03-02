@@ -1,4 +1,3 @@
-
 export interface Comment {
   id: string;
   author: string;
@@ -10,6 +9,9 @@ export interface User {
   id: string;
   username: string;
   realName: string;
+  role?: 'admin' | 'user';
+  bio?: string;
+  avatar?: string;
 }
 
 export interface Attachment {
@@ -37,9 +39,10 @@ export interface VideoItem {
   likes: number;
   comments: number;
   cover: string;
+  mediaUrl?: string;
   tags: string[];
   commentsList?: Comment[];
-  merchId?: string; // 新增：关联的周边商品 ID
+  merchId?: string;
 }
 
 export interface PhotoItem {
