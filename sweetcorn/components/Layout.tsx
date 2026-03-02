@@ -33,6 +33,7 @@ const navItems = [
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLiveOpen, setIsLiveOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userVersion, setUserVersion] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,14 +58,25 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fcf9e8]">
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${isLanding ? 'bg-white/40 backdrop-blur-sm' : 'bg-white/80 backdrop-blur-md border-b border-[#E2F7C1]'}`}>
+      <header className={`relative sticky top-0 z-50 transition-all duration-300 ${isLanding ? 'bg-white/40 backdrop-blur-sm' : 'bg-white/80 backdrop-blur-md border-b border-[#E2F7C1]'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
               <div className="w-8 h-8 rounded-full gradient-ningyuzhi shadow-sm" />
             </div>
-
-            <nav key={userVersion} className="hidden md:flex items-center space-x-1 lg:space-x-2 overflow-x-auto pb-1 custom-scrollbar">
+            <button
+            className="md:hidden p-2"
+           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+           ☰
+            </button>
+            <nav
+            key={userVersion}
+            className={`
+           ${isMobileMenuOpen ? 'flex flex-col absolute top-16 left-0 w-full bg-white shadow-md p-4 space-y-2' : 'hidden'}
+           md:flex md:static md:flex-row md:items-center md:space-x-1 lg:space-x-2 md:shadow-none md:p-0
+         `}
+            >
               {navItems.map((item) => (
                 <NavLink
                   key={item.path}
