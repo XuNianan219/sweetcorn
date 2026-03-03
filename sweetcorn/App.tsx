@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { supabase } from './services/supabase';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
@@ -25,6 +26,16 @@ import { CharitySubmit } from './pages/CharitySubmit';
 import { FanSupportSubmit } from './pages/FanSupportSubmit';
 
 const App: React.FC = () => {
+    
+   useEffect(() => {
+    async function test() {
+      const { data, error } = await supabase.from('posts').select('*')
+      console.log('DATA:', data)
+      console.log('ERROR:', error)
+    }
+
+    test()
+  }, [])
   return (
     <HashRouter>
       <Layout>
