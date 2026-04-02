@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String?  @unique
+  phone        String?  @unique
+  wechatOpenid String?  @unique @map("wechat_openid")
+  nickname     String?
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts        Post[]
+
+  @@map("users")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Post {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  content   String
+  authorId  String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  type      String   @default("")
+  mediaUrl  String   @default("") @map("media_url")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([authorId])
+  @@map("posts")
+}
