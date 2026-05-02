@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String?  @unique
+  phone        String?  @unique
+  wechatOpenid String?  @unique @map("wechat_openid")
+  nickname     String?
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts        Post[]
+  likes        Like[]
+  following    Follow[] @relation("UserFollowing")
+  followers    Follow[] @relation("UserFollowers")
+  ideas        Idea[]
+  ideaWants    IdeaWant[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String   @default("")
+  price       Float    @default(0)
+  imageUrls   String[] @default([]) @map("image_urls")
+  wantCount   Int      @default(0) @map("want_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("products")
+}
+
+model Idea {
+  id            String     @id @default(uuid()) @db.Uuid
+  authorId      String     @map("author_id") @db.Uuid
+  name          String
+  description   String     @default("")
+  designImages  String[]   @default([]) @map("design_images")
+  estimatedCost Float      @default(0) @map("estimated_cost")
+  targetPeople  Int        @default(50) @map("target_people")
+  wantCount     Int        @default(0) @map("want_count")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  author        User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  wants         IdeaWant[]
+
+  @@index([authorId])
+  @@map("ideas")
+}
+
+model IdeaWant {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  ideaId    String   @map("idea_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ideaId])
+  @@index([ideaId])
+  @@map("idea_wants")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Post {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  content   String
+  authorId  String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  type      String   @default("")
+  category  String   @default("life")
+  hashtags  String[] @default([])
+  mediaUrl   String   @default("") @map("media_url")
+  mediaUrls  String[]  @default([]) @map("media_urls")
+  mediaType  String   @default("none") @map("media_type")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  likes     Like[]
+
+  @@index([authorId])
+  @@map("posts")
+}
+
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model Follow {
+  id          String   @id @default(uuid()) @db.Uuid
+  followerId  String   @map("follower_id") @db.Uuid
+  followingId String   @map("following_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}

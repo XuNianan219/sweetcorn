@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sweetcorn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fcf9e8; /* Base soft yellow */
+        }
+        .font-soft {
+            font-family: 'ZCOOL XiaoWei', serif;
+        }
+        .gradient-ziyu {
+            background: linear-gradient(135deg, #7A67EE, #4A90E2, #F5F9FF);
+        }
+        .gradient-tian {
+            background: linear-gradient(135deg, #FFD64F, #FFE46B, #FFF5C7);
+        }
+        .gradient-ningyuzhi {
+            background: linear-gradient(135deg, #E2F7C1, #FCE68B);
+        }
+        .gradient-redsea {
+            background: linear-gradient(135deg, #AA1C1A, #FF4040, #5D1B1C);
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

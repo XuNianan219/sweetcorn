@@ -1,0 +1,8 @@
+{
+  "name": "甜玉米成长乐园",
+  "description": "梓渝与田栩宁的专属甜蜜互动空间，包含全屏首页、讨论区、短视频产出、同人文创作及AI助手功能。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
