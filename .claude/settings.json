@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma:*)",
+      "Bash(curl -s -X POST http://localhost:3000/api/posts -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyNGVlYWZlMi03Y2U4LTQ3OTMtYTI0ZC1mYTBiNmY3YzBjZmIiLCJwaG9uZSI6IjEzODAwMDAwMDAxIiwid2VjaGF0T3BlbmlkIjoid3hfMDAxIn0.7BA4e5U58Fz8XG6EO-CPhBuhIrf-19O7sEZYYZhy3FQ' -d '{:*)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:3000/api/posts -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyNGVlYWZlMi03Y2U4LTQ3OTMtYTI0ZC1mYTBiNmY3YzBjZmIiLCJwaG9uZSI6IjEzODAwMDAwMDAxIiwid2VjaGF0T3BlbmlkIjoid3hfMDAxIn0.7BA4e5U58Fz8XG6EO-CPhBuhIrf-19O7sEZYYZhy3FQ')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(echo \"PID: $!\")"
+    ]
+  }
+}

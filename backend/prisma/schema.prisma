@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String?  @unique
+  phone        String?  @unique
+  wechatOpenid String?  @unique @map("wechat_openid")
+  nickname     String?
+  avatarUrl    String?  @map("avatar_url")
+  password     String?  @map("password_hash")
+  role         String   @default("user")
+  status       String   @default("active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  posts        Post[]
+  likes        Like[]
+  following    Follow[] @relation("UserFollowing")
+  followers    Follow[] @relation("UserFollowers")
+  ideas        Idea[]
+  ideaWants    IdeaWant[]
+  submittedEvents Event[]
+  comments        Comment[]
+  commentLikes    CommentLike[]
+  notifications          Notification[] @relation("UserNotifications")
+  triggeredNotifications Notification[] @relation("ActorNotifications")
+
+  @@map("users")
+}
+
+model Event {
+  id            String    @id @default(uuid()) @db.Uuid
+  title         String
+  description   String    @default("")
+  eventType     String    @map("event_type")
+  coverImage    String    @default("") @map("cover_image")
+  location      String    @default("")
+  startAt       DateTime  @map("start_at") @db.Timestamptz(6)
+  endAt         DateTime? @map("end_at") @db.Timestamptz(6)
+  externalUrl   String    @default("") @map("external_url")
+  celebrities   String[]  @default([])
+  isPinned      Boolean   @default(false) @map("is_pinned")
+  status        String    @default("pending")
+  submittedBy   String    @map("submitted_by") @db.Uuid
+  submitter     User      @relation(fields: [submittedBy], references: [id], onDelete: Cascade)
+  reviewedBy    String?   @map("reviewed_by") @db.Uuid
+  rejectReason  String?   @map("reject_reason")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([submittedBy])
+  @@index([status, startAt])
+  @@map("events")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String   @default("")
+  price       Float    @default(0)
+  imageUrls   String[] @default([]) @map("image_urls")
+  wantCount   Int      @default(0) @map("want_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("products")
+}
+
+model Idea {
+  id            String     @id @default(uuid()) @db.Uuid
+  authorId      String     @map("author_id") @db.Uuid
+  name          String
+  description   String     @default("")
+  designImages  String[]   @default([]) @map("design_images")
+  estimatedCost Float      @default(0) @map("estimated_cost")
+  targetPeople  Int        @default(50) @map("target_people")
+  wantCount     Int        @default(0) @map("want_count")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  author        User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  wants         IdeaWant[]
+
+  @@index([authorId])
+  @@map("ideas")
+}
+
+model IdeaWant {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  ideaId    String   @map("idea_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ideaId])
+  @@index([ideaId])
+  @@map("idea_wants")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Post {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  content   String
+  authorId  String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  type      String   @default("")
+  category  String   @default("life")
+  hashtags  String[] @default([])
+  mediaUrl   String   @default("") @map("media_url")
+  mediaUrls  String[]  @default([]) @map("media_urls")
+  mediaType  String   @default("none") @map("media_type")
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy     String?  @map("deleted_by") @db.Uuid
+  deletedByRole String?  @map("deleted_by_role")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  likes     Like[]
+  comments  Comment[]
+
+  @@index([authorId])
+  @@map("posts")
+}
+
+model Comment {
+  id          String    @id @default(uuid()) @db.Uuid
+  postId      String    @map("post_id") @db.Uuid
+  authorId    String    @map("author_id") @db.Uuid
+  content     String
+  parentId    String?   @map("parent_id") @db.Uuid
+  likeCount   Int       @default(0) @map("like_count")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
+  likes       CommentLike[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  commentId String   @map("comment_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@map("comment_likes")
+}
+
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model CelebrityPage {
+  id          String   @id @default(uuid()) @db.Uuid
+  slug        String   @unique
+  title       String
+  subtitle    String   @default("")
+  bannerImage String   @default("") @map("banner_image")
+  bannerColor String   @default("yellow") @map("banner_color")
+  sections    Json     @default("[]")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy   String?  @map("updated_by") @db.Uuid
+
+  @@map("celebrity_pages")
+}
+
+model Notification {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  type        String
+  title       String
+  content     String   @default("")
+  actorId     String?  @map("actor_id") @db.Uuid
+  postId      String?  @map("post_id") @db.Uuid
+  commentId   String?  @map("comment_id") @db.Uuid
+  link        String   @default("")
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user        User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor       User?    @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model TimelineEntry {
+  id          String   @id @default(uuid()) @db.Uuid
+  date        String
+  title       String
+  summary     String   @default("")
+  content     String   @default("")
+  image       String   @default("")
+  orderNum    Int      @default(0) @map("order_num")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isPublished, orderNum])
+  @@map("timeline_entries")
+}
+
+model Follow {
+  id          String   @id @default(uuid()) @db.Uuid
+  followerId  String   @map("follower_id") @db.Uuid
+  followingId String   @map("following_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
