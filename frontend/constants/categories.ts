@@ -10,4 +10,17 @@ export const CATEGORY_MAP: Record<string, string> = {
   'love-history': '甜玉米日记',
 };
 
-export const getCategoryName = (k: string): string => CATEGORY_MAP[k] ?? k;
+export const CATEGORY_MAP_EN: Record<string, string> = {
+  life: 'Life',
+  discussion: 'Discussion Lab',
+  media: 'Media',
+  article: 'Articles',
+  travel: 'Travel',
+  merchandise: 'Market',
+  events: 'Intel Station',
+  business: 'Business',
+  'love-history': 'SweetCorn Diary',
+};
+
+export const getCategoryName = (k: string, lang: 'zh' | 'en' = 'zh'): string =>
+  (lang === 'en' ? CATEGORY_MAP_EN[k] : CATEGORY_MAP[k]) ?? CATEGORY_MAP[k] ?? k;

@@ -14,19 +14,21 @@ import { PinnedEventBanner } from '../components/events/PinnedEventBanner';
 import { CountdownItem } from '../components/events/CountdownItem';
 import { TimelineEvent } from '../components/events/TimelineEvent';
 import { CategoryEntry } from '../components/events/CategoryEntry';
+import { useLang } from '../contexts/LanguageContext';
 
 type LayoutVariant = 'A' | 'B' | 'C';
 type FilterType = EventType | 'all';
 
-const FILTER_TABS: { key: FilterType; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'performance', label: '🎤 演出' },
-  { key: 'merchandise', label: '🛍️ 周边' },
-  { key: 'endorsement', label: '📢 代言' },
+const FILTER_TABS: { key: FilterType; label: string; labelEn: string }[] = [
+  { key: 'all', label: '全部', labelEn: 'All' },
+  { key: 'performance', label: '🎤 演出', labelEn: '🎤 Shows' },
+  { key: 'merchandise', label: '🛍️ 周边', labelEn: '🛍️ Merch' },
+  { key: 'endorsement', label: '📢 代言', labelEn: '📢 Deals' },
 ];
 
 export const EventsBusiness: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
 
   const [layout, setLayout] = useState<LayoutVariant>('A');
   const [filter, setFilter] = useState<FilterType>('all');
@@ -53,7 +55,7 @@ export const EventsBusiness: React.FC = () => {
     setError('');
     getEvents(filter, 1, 40)
       .then((res) => setEvents(res.events))
-      .catch((e) => setError(e?.message || '加载失败'))
+      .catch((e) => setError(e?.message || t('加载失败', 'Failed to load')))
       .finally(() => setLoading(false));
   }, [filter]);
 
@@ -83,7 +85,7 @@ export const EventsBusiness: React.FC = () => {
     await Promise.all([
       getEvents(filter, 1, 40)
         .then((res) => setEvents(res.events))
-        .catch((e) => setError(e?.message || '加载失败')),
+        .catch((e) => setError(e?.message || t('加载失败', 'Failed to load'))),
       getPinnedEvents().then(setPinned).catch(() => {}),
       getUpcomingEvents(8).then(setUpcoming).catch(() => {}),
     ]);
@@ -95,20 +97,26 @@ export const EventsBusiness: React.FC = () => {
       {/* 标题 + 临时布局切换 */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-4xl font-black text-green-950">嗑学情报站</h1>
-          <p className="text-gray-500 font-medium mt-1">跟踪明星动态，不错过每一刻</p>
+          <h1 className="text-2xl md:text-4xl font-black text-green-950">{t('嗑学情报站', 'Intel Station')}</h1>
+          <p className="text-gray-500 font-medium mt-1">{t('跟踪明星动态，不错过每一刻', 'Track every moment of your stars')}</p>
+          <button
+            onClick={() => navigate('/events/mine')}
+            className="mt-2 text-sm font-bold text-green-700 hover:text-green-800 transition-colors"
+          >
+            {t('我提交的活动 →', 'My submissions →')}
+          </button>
         </div>
 
         {/* ⚠️ 临时开发用，确认布局后会删 */}
         <div className="bg-yellow-50 border-2 border-dashed border-yellow-300 rounded-2xl p-2">
           <p className="text-[10px] font-black text-yellow-700 px-1 pb-1">
-            ⚠️ 临时开发用·确认后会删
+            {t('⚠️ 临时开发用·确认后会删', '⚠️ Dev only · will be removed')}
           </p>
           <div className="flex gap-1">
             {([
-              ['A', '布局A 应援'],
-              ['B', '布局B 时间线'],
-              ['C', '布局C 商场'],
+              ['A', t('布局A 应援', 'Layout A Support')],
+              ['B', t('布局B 时间线', 'Layout B Timeline')],
+              ['C', t('布局C 商场', 'Layout C Mall')],
             ] as [LayoutVariant, string][]).map(([key, label]) => (
               <button
                 key={key}
@@ -138,7 +146,7 @@ export const EventsBusiness: React.FC = () => {
                 : 'bg-white text-gray-500 hover:text-green-600 border border-green-50'
             }`}
           >
-            {tab.label}
+            {t(tab.label, tab.labelEn)}
           </button>
         ))}
       </div>
@@ -150,7 +158,7 @@ export const EventsBusiness: React.FC = () => {
           {upcoming.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-black text-green-950 flex items-center gap-2">
-                🗓️ 即将开始
+                🗓️ {t('即将开始', 'Starting soon')}
               </h2>
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {upcoming.slice(0, 5).map((e) => (
@@ -166,10 +174,10 @@ export const EventsBusiness: React.FC = () => {
         <section className="space-y-4">
           <h2 className="text-lg font-black text-green-950 flex items-center gap-2">
             <Clock size={20} className="text-green-600" />
-            重要时间线
+            {t('重要时间线', 'Key Timeline')}
           </h2>
           {timelineEvents.length === 0 ? (
-            <p className="text-sm text-gray-400 font-medium">暂无即将开始的活动</p>
+            <p className="text-sm text-gray-400 font-medium">{t('暂无即将开始的活动', 'No upcoming events')}</p>
           ) : (
             <div>
               {timelineEvents.map((e, i) => (
@@ -186,7 +194,7 @@ export const EventsBusiness: React.FC = () => {
             <CategoryEntry
               type="performance"
               icon="🎤"
-              title="演出行程"
+              title={t('演出行程', 'Show schedule')}
               count={counts.performance}
               active={filter === 'performance'}
               onClick={() => setFilter('performance')}
@@ -194,7 +202,7 @@ export const EventsBusiness: React.FC = () => {
             <CategoryEntry
               type="merchandise"
               icon="🛍️"
-              title="周边发售"
+              title={t('周边发售', 'Merch drops')}
               count={counts.merchandise}
               active={filter === 'merchandise'}
               onClick={() => setFilter('merchandise')}
@@ -202,7 +210,7 @@ export const EventsBusiness: React.FC = () => {
             <CategoryEntry
               type="endorsement"
               icon="📢"
-              title="代言公益"
+              title={t('代言公益', 'Deals & charity')}
               count={counts.endorsement}
               active={filter === 'endorsement'}
               onClick={() => setFilter('endorsement')}
@@ -213,7 +221,7 @@ export const EventsBusiness: React.FC = () => {
 
       {/* ───── 全部活动（3 布局通用） ───── */}
       <section className="space-y-4">
-        <h2 className="text-lg font-black text-green-950 border-b border-gray-100 pb-3">全部活动</h2>
+        <h2 className="text-lg font-black text-green-950 border-b border-gray-100 pb-3">{t('全部活动', 'All events')}</h2>
 
         {error && (
           <div className="px-4 py-3 bg-red-50 text-red-500 rounded-xl text-sm font-medium">{error}</div>
@@ -224,7 +232,7 @@ export const EventsBusiness: React.FC = () => {
             <Loader2 size={28} className="animate-spin" />
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-20 text-gray-400 font-medium">该分类暂无活动</div>
+          <div className="text-center py-20 text-gray-400 font-medium">{t('该分类暂无活动', 'No events in this category')}</div>
         ) : (
           <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-4">
             {events.map((e) => (
@@ -237,7 +245,7 @@ export const EventsBusiness: React.FC = () => {
       {/* 浮动提交按钮 */}
       <button
         onClick={() => navigate('/events/submit')}
-        aria-label="提交活动"
+        aria-label={t('提交活动', 'Submit event')}
         className="fixed bottom-8 right-24 w-14 h-14 gradient-ningyuzhi rounded-full shadow-lg flex items-center justify-center text-green-900 z-50 hover:scale-110 active:scale-95 transition-transform"
       >
         <Plus size={28} strokeWidth={2.5} />

@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, Loader2, Lock, Phone, ShieldCheck, User } from 'lucide-react';
 import { register, saveToken } from '../services/postsApi';
 import { useCurrentUser } from '../contexts/UserContext';
+import { useLang } from '../contexts/LanguageContext';
 import { showSuccess } from '../utils/toast';
-import PageHeader from '../components/PageHeader';
 
 export const Register: React.FC = () => {
+  const { t } = useLang();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,15 +24,15 @@ export const Register: React.FC = () => {
     setError('');
 
     if (!/^1\d{10}$/.test(phone.trim())) {
-      setError('手机号格式不正确（11位数字，1开头）');
+      setError(t('手机号格式不正确（11位数字，1开头）', 'Invalid phone number (11 digits, starts with 1)'));
       return;
     }
     if (password.length < 6) {
-      setError('密码至少6位');
+      setError(t('密码至少6位', 'Password must be at least 6 characters'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('两次密码不一致');
+      setError(t('两次密码不一致', 'Passwords do not match'));
       return;
     }
 
@@ -40,27 +41,24 @@ export const Register: React.FC = () => {
       const { token, user } = await register(phone.trim(), password, nickname.trim() || undefined);
       saveToken(token);
       setUser(user);
-      showSuccess('注册成功！');
+      showSuccess(t('注册成功！', 'Registered!'));
       navigate('/');
     } catch (err: any) {
-      setError(err?.message || '注册失败，请稍后重试');
+      setError(err?.message || t('注册失败，请稍后重试', 'Registration failed, please try again later'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fcf9e8] p-4 relative">
-      <div className="absolute top-3 inset-x-3">
-        <PageHeader title="注册" showBack={false} />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#fcf9e8] p-4">
       <div className="max-w-md w-full bg-white p-10 rounded-[2.5rem] shadow-2xl border border-green-50 animate-fadeIn">
         <div className="text-center mb-8">
           <div className="w-20 h-20 gradient-ningyuzhi rounded-3xl mx-auto flex items-center justify-center text-green-900 mb-6 shadow-lg">
             <ShieldCheck size={40} />
           </div>
-          <h2 className="text-3xl font-black text-gray-900">注册账号</h2>
-          <p className="mt-2 text-sm text-gray-500 font-medium">加入甜玉米成长乐园</p>
+          <h2 className="text-3xl font-black text-gray-900">{t('注册账号', 'Create Account')}</h2>
+          <p className="mt-2 text-sm text-gray-500 font-medium">{t('加入甜玉米成长乐园', 'Join the SweetCorn community')}</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
@@ -79,7 +77,7 @@ export const Register: React.FC = () => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-400 font-medium"
-              placeholder="手机号（11位）"
+              placeholder={t('手机号（11位）', 'Phone number (11 digits)')}
             />
           </div>
 
@@ -91,7 +89,7 @@ export const Register: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-400 font-medium"
-              placeholder="密码（至少6位）"
+              placeholder={t('密码（至少6位）', 'Password (min 6 characters)')}
             />
             <button
               type="button"
@@ -110,7 +108,7 @@ export const Register: React.FC = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-400 font-medium"
-              placeholder="确认密码"
+              placeholder={t('确认密码', 'Confirm password')}
             />
             <button
               type="button"
@@ -128,7 +126,7 @@ export const Register: React.FC = () => {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-400 font-medium"
-              placeholder="昵称（可选）"
+              placeholder={t('昵称（可选）', 'Nickname (optional)')}
             />
           </div>
 
@@ -138,15 +136,15 @@ export const Register: React.FC = () => {
             className="w-full py-4 gradient-ningyuzhi text-green-900 font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading && <Loader2 size={20} className="animate-spin" />}
-            注册并登录
+            {t('注册并登录', 'Register & log in')}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
-            已有账号？
+            {t('已有账号？', 'Already have an account?')}
             <Link to="/login" className="text-green-600 font-bold hover:text-green-700 ml-1">
-              返回登录
+              {t('返回登录', 'Back to login')}
             </Link>
           </p>
         </div>

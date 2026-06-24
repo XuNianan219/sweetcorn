@@ -9,6 +9,7 @@ import {
   toggleCommentLike,
 } from '../../services/commentService';
 import { useCurrentUser } from '../../contexts/UserContext';
+import { useLang } from '../../contexts/LanguageContext';
 import { CommentItem } from './CommentItem';
 import { CommentInput } from './CommentInput';
 import { CommentReplyList } from './CommentReplyList';
@@ -22,6 +23,7 @@ const PAGE_SIZE = 20;
 
 export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const { user, isAdmin } = useCurrentUser();
+  const { t } = useLang();
   const currentUserId = user?.id;
 
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -123,11 +125,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
   const handleDelete = useCallback(
     async (comment: CommentData) => {
-      if (!window.confirm('确定删除这条评论吗？')) return;
+      if (!window.confirm(t('确定删除这条评论吗？', 'Delete this comment?'))) return;
       try {
         await deleteComment(comment.id);
       } catch (e: any) {
-        setError(e?.message || '删除失败');
+        setError(e?.message || t('删除失败', 'Delete failed'));
         return;
       }
       // 顶层评论且有回复 → 占位；否则移除
@@ -202,7 +204,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     <div className="space-y-4">
       {/* 标题 + 排序 */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black text-green-950">评论 ({total})</h3>
+        <h3 className="text-lg font-black text-green-950">{t('评论', 'Comments')} ({total})</h3>
         <div className="flex items-center gap-1 bg-gray-50 rounded-full p-1">
           {(['latest', 'hot'] as CommentSort[]).map((s) => (
             <button
@@ -212,14 +214,14 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                 sort === s ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              {s === 'latest' ? '最新' : '最热'}
+              {s === 'latest' ? t('最新', 'Latest') : t('最热', 'Hot')}
             </button>
           ))}
         </div>
       </div>
 
       {/* 顶层评论输入 */}
-      <CommentInput postId={postId} placeholder="说点什么吧…" onSuccess={handleTopSuccess} />
+      <CommentInput postId={postId} placeholder={t('说点什么吧…', 'Say something…')} onSuccess={handleTopSuccess} />
 
       {error && <div className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-sm font-medium">{error}</div>}
 
@@ -229,7 +231,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
           <CommentListSkeleton count={3} />
         </div>
       ) : comments.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 font-medium">还没有评论，来说点什么吧</div>
+        <div className="text-center py-12 text-gray-400 font-medium">{t('还没有评论，来说点什么吧', 'No comments yet — be the first')}</div>
       ) : (
         <div className="divide-y divide-gray-50">
           {comments.map((c) => (
@@ -264,7 +266,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                     postId={postId}
                     parentId={c.id}
                     autoFocus
-                    placeholder={`回复 @${c.author?.nickname || '匿名玉米'}`}
+                    placeholder={t(`回复 @${c.author?.nickname || '匿名玉米'}`, `Reply @${c.author?.nickname || 'Anonymous corn'}`)}
                     onSuccess={(rc) => handleReplySuccess(c.id, rc)}
                   />
                 </div>

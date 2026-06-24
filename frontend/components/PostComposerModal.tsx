@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { PostComposer } from './PostComposer';
+import { useLang } from '../contexts/LanguageContext';
 
 interface PostComposerModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
   category,
   onPosted,
 }) => {
+  const { t } = useLang();
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
@@ -42,7 +44,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
         {/* 关闭按钮浮在表单右上角 */}
         <button
           onClick={onClose}
-          aria-label="关闭"
+          aria-label={t('关闭', 'Close')}
           className="absolute top-5 right-4 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 transition-colors"
         >
           <X size={14} />

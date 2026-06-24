@@ -1,22 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Image as ImageIcon } from 'lucide-react';
 import { type FeedPost, getCategoryFeed } from '../../services/feedService';
 import { PostCard } from '../PostCard';
 import { FloatingPostButton } from '../FloatingPostButton';
 import { PostComposerModal } from '../PostComposerModal';
 import { PostFeedSkeleton } from '../skeletons/PostCardSkeleton';
+import { useLang } from '../../contexts/LanguageContext';
 
 type FilterKey = 'all' | '梓渝' | '田栩宁';
 
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: '梓渝', label: '梓渝' },
-  { key: '田栩宁', label: '田栩宁' },
+const FILTERS: { key: FilterKey; label: string; labelEn: string }[] = [
+  { key: 'all', label: '全部', labelEn: 'All' },
+  { key: '梓渝', label: '梓渝', labelEn: 'Ziyu' },
+  { key: '田栩宁', label: '田栩宁', labelEn: 'Tianxuning' },
 ];
 
 const PAGE_SIZE = 20;
 
 export const TravelPostFeed: React.FC = () => {
+  const { t } = useLang();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [page, setPage] = useState(1);
@@ -41,7 +43,7 @@ export const TravelPostFeed: React.FC = () => {
       setPage(nextPage);
     } catch (e: any) {
       if (reqId !== requestIdRef.current) return;
-      setError(e?.message || '加载失败');
+      setError(e?.message || t('加载失败', 'Failed to load'));
     } finally {
       if (reqId === requestIdRef.current) {
         setLoading(false);
@@ -95,8 +97,10 @@ export const TravelPostFeed: React.FC = () => {
     <section className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="text-2xl md:text-3xl font-black text-green-950">📷 粉丝游记</h2>
-          <p className="text-sm text-gray-500 font-medium">最近打卡</p>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-green-950 flex items-center gap-2">
+            <ImageIcon size={24} className="text-green-600" /> {t('粉丝游记', 'Fan Travel Logs')}
+          </h2>
+          <p className="text-sm text-gray-500 font-medium">{t('和粉丝一起去远方', 'Travel far together with fans')}</p>
         </div>
 
         <div className="flex items-center gap-1 bg-white rounded-full p-1 border border-green-50 self-start">
@@ -111,7 +115,7 @@ export const TravelPostFeed: React.FC = () => {
                   : 'text-gray-500 hover:text-green-700'
               }`}
             >
-              {f.label}
+              {t(f.label, f.labelEn)}
             </button>
           ))}
         </div>
@@ -127,7 +131,7 @@ export const TravelPostFeed: React.FC = () => {
         <PostFeedSkeleton count={8} />
       ) : visiblePosts.length === 0 ? (
         <div className="text-center py-20 text-gray-400 font-medium">
-          还没有游记，快来发第一篇吧
+          {t('还没有游记，快来发第一篇吧', 'No travel logs yet — be the first to post!')}
         </div>
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-4">

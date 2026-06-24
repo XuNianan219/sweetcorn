@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Store } from 'lucide-react';
 import { getIdea, toggleWantIdea, type Idea } from '../services/merchandiseService';
 import PageHeader from '../components/PageHeader';
+import { useLang } from '../contexts/LanguageContext';
+import { useCurrentUser } from '../contexts/UserContext';
+import { useAutoTranslate } from '../hooks/useAutoTranslate';
 
 export const MerchandiseIdeaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useLang();
+  const { user } = useCurrentUser();
   const [idea, setIdea] = useState<Idea | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // 英文模式下显示创意名/描述的译文
+  const tr = useAutoTranslate('idea', idea?.id, {
+    name: idea?.name || '',
+    description: idea?.description || '',
+  });
   const [busy, setBusy] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
 
@@ -17,7 +27,7 @@ export const MerchandiseIdeaDetail: React.FC = () => {
     if (!id) return;
     getIdea(id)
       .then(setIdea)
-      .catch(() => setError('创意不存在'))
+      .catch(() => setError(t('创意不存在', 'Idea not found')))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -42,17 +52,17 @@ export const MerchandiseIdeaDetail: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-20 text-gray-400 text-sm">加载中...</div>;
+    return <div className="text-center py-20 text-gray-400 text-sm">{t('加载中...', 'Loading...')}</div>;
   }
   if (error || !idea) {
     return (
       <div className="text-center py-20 space-y-4">
-        <p className="text-gray-400 text-sm">{error ?? '创意不存在'}</p>
+        <p className="text-gray-400 text-sm">{error ?? t('创意不存在', 'Idea not found')}</p>
         <button
           onClick={() => navigate(-1)}
           className="text-green-600 underline text-sm"
         >
-          返回
+          {t('返回', 'Back')}
         </button>
       </div>
     );
@@ -62,7 +72,7 @@ export const MerchandiseIdeaDetail: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
-      <PageHeader title="创意详情" />
+      <PageHeader title={t('创意详情', 'Idea details')} />
 
       {/* 图片轮播 */}
       {idea.designImages.length > 0 && (
@@ -94,7 +104,7 @@ export const MerchandiseIdeaDetail: React.FC = () => {
 
       {/* 标题 & 作者 */}
       <div className="space-y-3">
-        <h1 className="text-2xl font-black text-gray-900">{idea.name}</h1>
+        <h1 className="text-2xl font-black text-gray-900">{tr.name}</h1>
         <div className="flex items-center gap-2">
           {idea.author.avatarUrl ? (
             <img
@@ -105,7 +115,7 @@ export const MerchandiseIdeaDetail: React.FC = () => {
           ) : (
             <div className="w-8 h-8 rounded-full gradient-ningyuzhi" />
           )}
-          <span className="text-sm text-gray-500">{idea.author.nickname ?? '匿名玉米'}</span>
+          <span className="text-sm text-gray-500">{idea.author.nickname ?? t('匿名玉米', 'Anonymous corn')}</span>
         </div>
       </div>
 
@@ -113,18 +123,18 @@ export const MerchandiseIdeaDetail: React.FC = () => {
       {idea.description && (
         <div className="bg-gray-50 rounded-2xl p-4">
           <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {idea.description}
+            {tr.description}
           </p>
         </div>
       )}
 
       {/* 想要进度卡片 */}
       <div className="bg-white border border-[#E2F7C1] rounded-2xl p-5 space-y-4">
-        <h3 className="font-black text-gray-900">想要进度</h3>
+        <h3 className="font-black text-gray-900">{t('想要进度', 'Demand progress')}</h3>
         <div className="space-y-2">
           <div className="flex justify-between text-sm font-medium">
-            <span className="text-green-700 font-black">{idea.wantCount} 人想要</span>
-            <span className="text-gray-400">目标 {idea.targetPeople} 人</span>
+            <span className="text-green-700 font-black">{idea.wantCount} {t('人想要', 'want it')}</span>
+            <span className="text-gray-400">{t('目标', 'Goal')} {idea.targetPeople} {t('人', '')}</span>
           </div>
           <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -134,8 +144,8 @@ export const MerchandiseIdeaDetail: React.FC = () => {
           </div>
           <p className="text-xs text-gray-400">
             {progress >= 100
-              ? '🎉 已达成目标！'
-              : `还差 ${idea.targetPeople - idea.wantCount} 人即可成团`}
+              ? t('🎉 已达成目标！', '🎉 Goal reached!')
+              : t(`还差 ${idea.targetPeople - idea.wantCount} 人即可成团`, `${idea.targetPeople - idea.wantCount} more to form a group`)}
           </p>
         </div>
 
@@ -149,21 +159,36 @@ export const MerchandiseIdeaDetail: React.FC = () => {
           }`}
         >
           <Heart size={16} className={idea.isWantedByMe ? 'fill-green-600' : ''} />
-          {idea.isWantedByMe ? '已想要' : '我也想要'}
+          {idea.isWantedByMe ? t('已想要', 'Wanted') : t('我也想要', 'I want it too')}
         </button>
+
+        {/* 作者本人 + 已达成众筹目标 → 可上架为长期售卖商品（自营客服） */}
+        {user?.id === idea.authorId && idea.wantCount >= idea.targetPeople && (
+          <button
+            onClick={() =>
+              navigate('/merchandise/product/submit', {
+                state: { name: idea.name, description: idea.description, imageUrls: idea.designImages },
+              })
+            }
+            className="w-full py-3 rounded-2xl font-black text-sm bg-green-700 text-yellow-300 hover:bg-green-800 transition-colors flex items-center justify-center gap-2"
+          >
+            <Store size={16} />
+            {t('众筹达成 · 上架为长期售卖商品', 'Goal met · list as a product')}
+          </button>
+        )}
       </div>
 
       {/* 标签 */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 rounded-xl p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">预估成本</p>
+          <p className="text-xs text-gray-400 mb-1">{t('预估成本', 'Est. cost')}</p>
           <p className="text-xl font-black text-green-700">¥{idea.estimatedCost}</p>
-          <p className="text-xs text-gray-400">元 / 件</p>
+          <p className="text-xs text-gray-400">{t('元 / 件', '¥ / item')}</p>
         </div>
         <div className="bg-gray-50 rounded-xl p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">目标成团人数</p>
+          <p className="text-xs text-gray-400 mb-1">{t('目标成团人数', 'Group goal')}</p>
           <p className="text-xl font-black text-green-700">{idea.targetPeople}</p>
-          <p className="text-xs text-gray-400">人</p>
+          <p className="text-xs text-gray-400">{t('人', 'people')}</p>
         </div>
       </div>
     </div>

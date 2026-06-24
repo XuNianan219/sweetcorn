@@ -4,8 +4,10 @@ import {
   type EventItem,
   EVENT_TYPE_BADGE,
   EVENT_TYPE_META,
+  EVENT_TYPE_META_EN,
   formatEventDate,
 } from '../../services/eventsService';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface TimelineEventProps {
   event: EventItem;
@@ -13,7 +15,10 @@ interface TimelineEventProps {
 }
 
 export const TimelineEvent: React.FC<TimelineEventProps> = ({ event, isLast }) => {
+  const { lang } = useLang();
   const meta = EVENT_TYPE_META[event.eventType];
+  const metaLabel = lang === 'en' ? EVENT_TYPE_META_EN[event.eventType].label : meta.label;
+  const metaCta = lang === 'en' ? EVENT_TYPE_META_EN[event.eventType].cta : meta.cta;
 
   return (
     <div className="flex gap-4">
@@ -28,11 +33,11 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({ event, isLast }) =
         <div className="flex-grow min-w-0 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${EVENT_TYPE_BADGE[event.eventType]}`}>
-              {meta.emoji} {meta.label}
+              {meta.emoji} {metaLabel}
             </span>
             <span className="text-xs font-bold text-green-600 flex items-center gap-1">
               <CalendarDays size={12} />
-              {formatEventDate(event.startAt)}
+              {formatEventDate(event.startAt, lang)}
             </span>
           </div>
 
@@ -54,7 +59,7 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({ event, isLast }) =
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-4 py-1.5 gradient-ningyuzhi text-green-950 font-black rounded-xl text-xs hover:scale-[1.02] transition-transform"
             >
-              {meta.cta}
+              {metaCta}
               <ExternalLink size={13} />
             </a>
           )}

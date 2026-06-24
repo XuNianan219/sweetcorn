@@ -3,20 +3,74 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import { type FeedPost, getPost, toggleLike } from '../services/feedService';
 import { timeAgo } from '../services/commentService';
+import { getFollowStatus, toggleFollow } from '../services/followService';
 import { getCategoryName } from '../constants/categories';
 import { CommentSection } from '../components/comments/CommentSection';
+import { ShareMenu } from '../components/ImmersiveVideo/ShareMenu';
 import PageHeader from '../components/PageHeader';
 import { LazyImage } from '../components/LazyImage';
+import { useCurrentUser } from '../contexts/UserContext';
+import { useLang } from '../contexts/LanguageContext';
+import { geminiService } from '../services/gemini';
+import { showInfo, showError } from '../utils/toast';
 
 export const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useCurrentUser();
+  const { lang, t } = useLang();
+
+  // 帖子原文 / 英文切换
+  const [showEn, setShowEn] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [trans, setTrans] = useState<{ title: string; content: string } | null>(null);
 
   const [post, setPost] = useState<FeedPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [likeBusy, setLikeBusy] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const commentRef = useRef<HTMLDivElement | null>(null);
+
+  const authorId = post?.author?.id;
+  const isOwnPost = isLoggedIn && !!authorId && user?.id === authorId;
+
+  // 登录且非自己的帖子 → 查询关注状态
+  useEffect(() => {
+    if (!isLoggedIn || !authorId || isOwnPost) {
+      setFollowing(false);
+      return;
+    }
+    let cancelled = false;
+    getFollowStatus(authorId)
+      .then((r) => !cancelled && setFollowing(r.following))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authorId, isLoggedIn, isOwnPost]);
+
+  const handleFollow = async () => {
+    if (!isLoggedIn) {
+      showInfo('请先登录');
+      navigate('/login');
+      return;
+    }
+    if (!authorId || followBusy) return;
+    setFollowBusy(true);
+    const prev = following;
+    setFollowing(!prev); // 乐观更新
+    try {
+      const r = await toggleFollow(authorId);
+      setFollowing(r.following);
+    } catch {
+      setFollowing(prev); // 失败回滚（错误 toast 由 apiClient 统一处理）
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -43,6 +97,24 @@ export const PostDetail: React.FC = () => {
       setPost((p) => (p ? { ...p, isLikedByMe: wasLiked, likeCount: p.likeCount + (wasLiked ? 1 : -1) } : p));
     } finally {
       setLikeBusy(false);
+    }
+  };
+
+  const handleShowEnglish = async () => {
+    setShowEn(true);
+    if (trans || !post) return;
+    setTranslating(true);
+    try {
+      const [tt, tc] = await Promise.all([
+        post.title ? geminiService.translateToEnglish(post.title, { postId: post.id, field: 'title' }) : Promise.resolve(''),
+        post.content ? geminiService.translateToEnglish(post.content, { postId: post.id, field: 'content' }) : Promise.resolve(''),
+      ]);
+      setTrans({ title: tt, content: tc });
+    } catch {
+      showError(t('翻译失败，请稍后再试', 'Translation failed, try again'));
+      setShowEn(false);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -95,7 +167,10 @@ export const PostDetail: React.FC = () => {
       <div className="bg-white rounded-[2rem] border border-green-50 shadow-sm p-6 md:p-8 space-y-5">
         {/* 作者卡片 */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-green-50 overflow-hidden flex items-center justify-center text-xl shrink-0">
+          <div
+            onClick={() => authorId && navigate(`/users/${authorId}`)}
+            className="w-12 h-12 rounded-full bg-green-50 overflow-hidden flex items-center justify-center text-xl shrink-0 cursor-pointer"
+          >
             {isAvatarUrl ? (
               <img src={avatar} alt={nickname} className="w-full h-full object-cover" />
             ) : (
@@ -103,19 +178,62 @@ export const PostDetail: React.FC = () => {
             )}
           </div>
           <div>
-            <p className="font-black text-gray-800">{nickname}</p>
+            <p
+              onClick={() => authorId && navigate(`/users/${authorId}`)}
+              className="font-black text-gray-800 cursor-pointer hover:text-green-600 transition-colors"
+            >
+              {nickname}
+            </p>
             <p className="text-xs text-gray-400 font-medium">
               {timeAgo(post.createdAt)}
               {post.category && ` · ${getCategoryName(post.category)}`}
             </p>
           </div>
+
+          {/* 关注作者：自己的帖子不显示 */}
+          {authorId && !isOwnPost && (
+            <button
+              onClick={handleFollow}
+              disabled={followBusy}
+              className={`ml-auto shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-colors disabled:opacity-60 ${
+                following
+                  ? 'border border-green-300 text-green-700 bg-white hover:bg-green-50'
+                  : 'bg-green-700 text-white hover:bg-green-800'
+              }`}
+            >
+              {following ? '已关注' : '+ 关注'}
+            </button>
+          )}
         </div>
 
+        {/* 英文模式下：原文 / English 切换 */}
+        {lang === 'en' && (post.title || post.content) && (
+          <div className="flex items-center gap-0.5 bg-gray-50 rounded-full p-0.5 w-fit text-xs font-bold">
+            <button
+              onClick={() => setShowEn(false)}
+              className={`px-3 py-1 rounded-full transition-colors ${!showEn ? 'bg-green-600 text-white' : 'text-gray-500'}`}
+            >
+              Original
+            </button>
+            <button
+              onClick={handleShowEnglish}
+              disabled={translating}
+              className={`px-3 py-1 rounded-full transition-colors disabled:opacity-60 ${showEn ? 'bg-green-600 text-white' : 'text-gray-500'}`}
+            >
+              {translating ? '…' : 'English'}
+            </button>
+          </div>
+        )}
+
         {/* 标题 + 正文 */}
-        {post.title && <h1 className="text-2xl font-black text-green-950 leading-snug">{post.title}</h1>}
+        {post.title && (
+          <h1 className="text-2xl font-black text-green-950 leading-snug">
+            {showEn && trans ? trans.title : post.title}
+          </h1>
+        )}
         {post.content && (
           <p className="text-[15px] text-gray-700 font-medium leading-relaxed whitespace-pre-wrap">
-            {post.content}
+            {showEn && trans ? trans.content : post.content}
           </p>
         )}
 
@@ -165,12 +283,18 @@ export const PostDetail: React.FC = () => {
             <MessageCircle size={20} />
             {post.commentCount}
           </button>
-          <button className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-green-600 transition-colors" title="分享（即将上线）">
+          <button
+            onClick={() => setShareOpen(true)}
+            className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-green-600 transition-colors"
+          >
             <Share2 size={20} />
             分享
           </button>
         </div>
       </div>
+
+      {/* 分享弹窗（复用沉浸式视频的 ShareMenu） */}
+      <ShareMenu post={post} open={shareOpen} onClose={() => setShareOpen(false)} />
 
       {/* 评论区 */}
       <div ref={commentRef} className="bg-white rounded-[2rem] border border-green-50 shadow-sm p-6 md:p-8 mt-5">

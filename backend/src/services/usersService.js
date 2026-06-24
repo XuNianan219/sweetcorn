@@ -71,6 +71,7 @@ async function findUserById(userId) {
       wechatOpenid: true,
       nickname: true,
       avatarUrl: true,
+      bio: true,
       role: true,
       status: true,
       createdAt: true
@@ -297,6 +298,7 @@ async function updateMyProfile(userId, data) {
   const payload = {};
   if (data.nickname !== undefined) payload.nickname = data.nickname;
   if (data.avatarUrl !== undefined) payload.avatarUrl = data.avatarUrl;
+  if (data.bio !== undefined) payload.bio = data.bio;
 
   if (Object.keys(payload).length === 0) {
     return findUserById(userId);
@@ -311,6 +313,7 @@ async function updateMyProfile(userId, data) {
       wechatOpenid: true,
       nickname: true,
       avatarUrl: true,
+      bio: true,
       role: true,
       status: true,
       createdAt: true

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ChevronLeft, Link2, X } from 'lucide-react';
 import type { FeedPost } from '../../services/feedService';
 import { uninterestPost, reportPost } from '../../services/postsApi';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface ShareMenuProps {
   post: FeedPost;
@@ -10,9 +11,14 @@ interface ShareMenuProps {
   onClose: () => void;
 }
 
-const REPORT_REASONS = ['色情低俗', '违法违规', '政治敏感', '其他'];
-
 export const ShareMenu: React.FC<ShareMenuProps> = ({ post, open, onClose }) => {
+  const { t } = useLang();
+  const REPORT_REASONS: { value: string; label: string }[] = [
+    { value: '色情低俗', label: t('色情低俗', 'Porn / vulgar') },
+    { value: '违法违规', label: t('违法违规', 'Illegal') },
+    { value: '政治敏感', label: t('政治敏感', 'Politically sensitive') },
+    { value: '其他', label: t('其他', 'Other') },
+  ];
   const [render, setRender] = useState(open);
   const [visible, setVisible] = useState(false);
   const [reporting, setReporting] = useState(false); // 是否处于举报二级菜单
@@ -46,7 +52,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({ post, open, onClose }) => 
     const url = `${window.location.origin}/#/posts/${post.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      showToast('链接已复制');
+      showToast(t('链接已复制', 'Link copied'));
     } catch {
       showToast(url);
     }
@@ -58,7 +64,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({ post, open, onClose }) => 
     } catch {
       /* 占位，失败也提示 */
     }
-    showToast('已记录，将减少类似推荐');
+    showToast(t('已记录，将减少类似推荐', 'Noted — we’ll show fewer like this'));
     setTimeout(close, 400);
   };
 
@@ -68,7 +74,7 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({ post, open, onClose }) => 
     } catch {
       /* ignore */
     }
-    showToast('已收到举报，我们会尽快处理');
+    showToast(t('已收到举报，我们会尽快处理', 'Report received — we’ll review it soon'));
     setTimeout(close, 400);
   };
 
@@ -114,10 +120,10 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({ post, open, onClose }) => 
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
           {reporting ? (
             <button onClick={() => setReporting(false)} className="flex items-center gap-1 text-sm font-bold text-gray-500">
-              <ChevronLeft size={18} /> 返回
+              <ChevronLeft size={18} /> {t('返回', 'Back')}
             </button>
           ) : (
-            <h3 className="text-base font-black text-green-950">分享</h3>
+            <h3 className="text-base font-black text-green-950">{t('分享', 'Share')}</h3>
           )}
           <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500">
             <X size={16} />
@@ -126,18 +132,18 @@ export const ShareMenu: React.FC<ShareMenuProps> = ({ post, open, onClose }) => 
 
         {!reporting ? (
           <div className="py-1 max-h-[60vh] overflow-y-auto">
-            <Item icon={<Link2 size={18} className="inline" />} label="复制链接" onClick={handleCopy} />
-            <Item icon="💬" label="分享到微信" onClick={() => showToast('微信分享暂未开放')} />
-            <Item icon="🔄" label="分享到微博" onClick={() => showToast('微博分享暂未开放')} />
+            <Item icon={<Link2 size={18} className="inline" />} label={t('复制链接', 'Copy link')} onClick={handleCopy} />
+            <Item icon="💬" label={t('分享到微信', 'Share to WeChat')} onClick={() => showToast(t('微信分享暂未开放', 'WeChat sharing not available yet'))} />
+            <Item icon="🔄" label={t('分享到微博', 'Share to Weibo')} onClick={() => showToast(t('微博分享暂未开放', 'Weibo sharing not available yet'))} />
             <div className="h-px bg-gray-100 my-1" />
-            <Item icon="🙈" label="不感兴趣" onClick={handleUninterest} />
-            <Item icon="🚩" label="举报" onClick={() => setReporting(true)} danger />
+            <Item icon="🙈" label={t('不感兴趣', 'Not interested')} onClick={handleUninterest} />
+            <Item icon="🚩" label={t('举报', 'Report')} onClick={() => setReporting(true)} danger />
           </div>
         ) : (
           <div className="py-1">
-            <p className="px-5 py-2 text-xs font-bold text-gray-400">请选择举报原因</p>
+            <p className="px-5 py-2 text-xs font-bold text-gray-400">{t('请选择举报原因', 'Select a reason')}</p>
             {REPORT_REASONS.map((r) => (
-              <Item key={r} icon="🚩" label={r} onClick={() => handleReport(r)} danger />
+              <Item key={r.value} icon="🚩" label={r.label} onClick={() => handleReport(r.value)} danger />
             ))}
           </div>
         )}

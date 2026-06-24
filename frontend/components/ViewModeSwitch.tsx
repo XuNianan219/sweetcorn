@@ -1,5 +1,6 @@
 import React from 'react';
 import { Smartphone, Waves } from 'lucide-react';
+import { useLang } from '../contexts/LanguageContext';
 
 export type MediaViewMode = 'waterfall' | 'immersive';
 
@@ -9,6 +10,7 @@ interface ViewModeSwitchProps {
 }
 
 export const ViewModeSwitch: React.FC<ViewModeSwitchProps> = ({ mode, onChange }) => {
+  const { t } = useLang();
   const immersive = mode === 'immersive';
   // 沉浸式时抬高层级盖过全屏视频(z-100)，瀑布流时低于弹窗(z-50)
   const zClass = immersive ? 'z-[110]' : 'z-40';
@@ -41,8 +43,8 @@ export const ViewModeSwitch: React.FC<ViewModeSwitchProps> = ({ mode, onChange }
           type="button"
           onClick={() => onChange('waterfall')}
           className={btn(mode === 'waterfall')}
-          title="瀑布流"
-          aria-label="瀑布流视图"
+          title={t('瀑布流', 'Grid')}
+          aria-label={t('瀑布流视图', 'Grid view')}
         >
           <Waves size={18} />
         </button>
@@ -50,8 +52,8 @@ export const ViewModeSwitch: React.FC<ViewModeSwitchProps> = ({ mode, onChange }
           type="button"
           onClick={() => onChange('immersive')}
           className={btn(mode === 'immersive')}
-          title="沉浸式"
-          aria-label="沉浸式视图"
+          title={t('沉浸式', 'Immersive')}
+          aria-label={t('沉浸式视图', 'Immersive view')}
         >
           <Smartphone size={18} />
         </button>

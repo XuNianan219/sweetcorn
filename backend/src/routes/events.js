@@ -167,7 +167,7 @@ router.patch('/:id/approve', requireAdmin, async (req, res, next) => {
       title: '你提交的活动已通过审核',
       content: event.title,
       actorId: req.user.userId,
-      link: '/category/events-business',
+      link: '/events/mine',
     });
 
     res.json({ event });
@@ -192,7 +192,7 @@ router.patch('/:id/reject', requireAdmin, async (req, res, next) => {
       title: '你提交的活动未通过审核',
       content: `原因：${reason || '未填写'}`,
       actorId: req.user.userId,
-      link: '/category/events-business',
+      link: '/events/mine',
     });
 
     res.json({ event });

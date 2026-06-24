@@ -10,11 +10,13 @@ import {
 import { LoadingButton } from '../components/LoadingButton';
 import PageHeader from '../components/PageHeader';
 import { showSuccess, showError } from '../utils/toast';
+import { useLang } from '../contexts/LanguageContext';
 
 export const AdminTimelineForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const { t } = useLang();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [date, setDate] = useState('');
@@ -55,7 +57,7 @@ export const AdminTimelineForm: React.FC = () => {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      showError('只能上传图片');
+      showError(t('只能上传图片', 'Images only'));
       return;
     }
     setUploading(true);
@@ -63,7 +65,7 @@ export const AdminTimelineForm: React.FC = () => {
       const { url } = await uploadMedia(file);
       setImage(url);
     } catch (err: any) {
-      showError(err?.message || '图片上传失败');
+      showError(err?.message || t('图片上传失败', 'Image upload failed'));
     } finally {
       setUploading(false);
     }
@@ -71,11 +73,11 @@ export const AdminTimelineForm: React.FC = () => {
 
   const handleSave = async () => {
     if (!date.trim()) {
-      showError('请填写日期');
+      showError(t('请填写日期', 'Please enter a date'));
       return;
     }
     if (!title.trim()) {
-      showError('请填写标题');
+      showError(t('请填写标题', 'Please enter a title'));
       return;
     }
     setSaving(true);
@@ -94,7 +96,7 @@ export const AdminTimelineForm: React.FC = () => {
       } else {
         await createTimelineEntry(payload);
       }
-      showSuccess('已保存');
+      showSuccess(t('已保存', 'Saved'));
       navigate('/timeline');
     } catch {
       /* 错误已由 apiClient toast */
@@ -119,49 +121,49 @@ export const AdminTimelineForm: React.FC = () => {
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6 animate-fadeIn">
       <PageHeader onBack={() => navigate('/timeline')} />
 
-      <h1 className="text-2xl font-black text-green-950">{isEdit ? '编辑时间线条目' : '新建时间线条目'}</h1>
+      <h1 className="text-2xl font-black text-green-950">{isEdit ? t('编辑时间线条目', 'Edit diary entry') : t('新建时间线条目', 'New diary entry')}</h1>
 
       <div className="space-y-5">
         <div className="space-y-1.5">
-          <label className={labelClass}>日期 *</label>
+          <label className={labelClass}>{t('日期 *', 'Date *')}</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
         </div>
 
         <div className="space-y-1.5">
-          <label className={labelClass}>标题 *</label>
+          <label className={labelClass}>{t('标题 *', 'Title *')}</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="例如：初遇"
+            placeholder={t('例如：初遇', 'e.g. First meeting')}
             className={inputClass}
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className={labelClass}>简短描述（卡片显示）</label>
+          <label className={labelClass}>{t('简短描述（卡片显示）', 'Short summary (card)')}</label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={2}
-            placeholder="时间线卡片上的一句话描述"
+            placeholder={t('时间线卡片上的一句话描述', 'A one-line description shown on the card')}
             className={`${inputClass} resize-none`}
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className={labelClass}>详细内容（详情页显示）</label>
+          <label className={labelClass}>{t('详细内容（详情页显示）', 'Full content (detail page)')}</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
-            placeholder="详情页的完整内容，支持换行"
+            placeholder={t('详情页的完整内容，支持换行', 'Full content for the detail page, line breaks supported')}
             className={`${inputClass} resize-none`}
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className={labelClass}>配图（单图）</label>
+          <label className={labelClass}>{t('配图（单图）', 'Image (single)')}</label>
           {image ? (
             <div className="relative w-full max-w-sm rounded-xl overflow-hidden bg-gray-100">
               <img src={image} alt="" className="w-full object-cover" />
@@ -181,7 +183,7 @@ export const AdminTimelineForm: React.FC = () => {
               className="flex items-center gap-2 px-4 py-3 bg-green-50 text-green-700 rounded-xl font-bold text-sm hover:bg-green-100 transition-colors disabled:opacity-50"
             >
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
-              {uploading ? '上传中…' : '上传配图'}
+              {uploading ? t('上传中…', 'Uploading…') : t('上传配图', 'Upload image')}
             </button>
           )}
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
@@ -189,7 +191,7 @@ export const AdminTimelineForm: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className={labelClass}>排序号</label>
+            <label className={labelClass}>{t('排序号', 'Order')}</label>
             <input
               type="number"
               value={orderNum}
@@ -205,21 +207,21 @@ export const AdminTimelineForm: React.FC = () => {
                 onChange={(e) => setIsPublished(e.target.checked)}
                 className="w-4 h-4 accent-green-600"
               />
-              发布（在甜玉米日记显示）
+              {t('发布（在甜玉米日记显示）', 'Publish (show in SweetCorn diary)')}
             </label>
           </div>
         </div>
 
         <div className="flex items-center gap-3 pt-2">
           <LoadingButton loading={saving} onClick={handleSave}>
-            保存
+            {t('保存', 'Save')}
           </LoadingButton>
           <button
             type="button"
             onClick={() => navigate('/timeline')}
             className="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors"
           >
-            取消
+            {t('取消', 'Cancel')}
           </button>
         </div>
       </div>

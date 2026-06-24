@@ -8,9 +8,11 @@ import {
 } from '../services/timelineEntriesService';
 import PageHeader from '../components/PageHeader';
 import { showSuccess } from '../utils/toast';
+import { useLang } from '../contexts/LanguageContext';
 
 export const AdminTimeline: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [entries, setEntries] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -26,12 +28,12 @@ export const AdminTimeline: React.FC = () => {
   useEffect(load, []);
 
   const handleDelete = async (entry: TimelineEntry) => {
-    if (!window.confirm(`确定删除「${entry.title}」吗？此操作不可恢复`)) return;
+    if (!window.confirm(t(`确定删除「${entry.title}」吗？此操作不可恢复`, `Delete "${entry.title}"? This cannot be undone.`))) return;
     setBusyId(entry.id);
     try {
       await deleteTimelineEntry(entry.id);
       setEntries((prev) => prev.filter((e) => e.id !== entry.id));
-      showSuccess('已删除');
+      showSuccess(t('已删除', 'Deleted'));
     } catch {
       /* 错误已由 apiClient toast */
     } finally {
@@ -42,7 +44,7 @@ export const AdminTimeline: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6 animate-fadeIn">
       <PageHeader
-        title="日记管理"
+        title={t('日记管理', 'Diary Manager')}
         onBack={() => navigate('/timeline')}
         rightSlot={
           <button
@@ -50,7 +52,7 @@ export const AdminTimeline: React.FC = () => {
             className="inline-flex items-center gap-2 px-4 py-2 bg-green-700 text-yellow-300 font-black rounded-2xl shadow-md hover:bg-green-800 transition-colors text-sm"
           >
             <Plus size={16} />
-            新建条目
+            {t('新建条目', 'New entry')}
           </button>
         }
       />
@@ -62,7 +64,7 @@ export const AdminTimeline: React.FC = () => {
         </div>
       ) : entries.length === 0 ? (
         <div className="py-16 text-center border-4 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/40 text-gray-400 font-bold">
-          还没有条目，点右上角「新建条目」添加
+          {t('还没有条目，点右上角「新建条目」添加', 'No entries yet — tap "New entry" at the top right')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -79,10 +81,10 @@ export const AdminTimeline: React.FC = () => {
                   <span className="text-xs font-bold text-green-600">{entry.date}</span>
                   {!entry.isPublished && (
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                      未发布
+                      {t('未发布', 'Draft')}
                     </span>
                   )}
-                  <span className="text-[10px] text-gray-400 font-medium">排序 {entry.orderNum}</span>
+                  <span className="text-[10px] text-gray-400 font-medium">{t('排序', 'Order')} {entry.orderNum}</span>
                 </div>
                 <h3 className="font-black text-gray-800 truncate">{entry.title}</h3>
               </div>
@@ -91,14 +93,14 @@ export const AdminTimeline: React.FC = () => {
                   onClick={() => navigate(`/admin/timeline/${entry.id}/edit`)}
                   className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors"
                 >
-                  <Pencil size={13} /> 编辑
+                  <Pencil size={13} /> {t('编辑', 'Edit')}
                 </button>
                 <button
                   onClick={() => handleDelete(entry)}
                   disabled={busyId === entry.id}
                   className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors disabled:opacity-50"
                 >
-                  {busyId === entry.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} 删除
+                  {busyId === entry.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} {t('删除', 'Delete')}
                 </button>
               </div>
             </div>

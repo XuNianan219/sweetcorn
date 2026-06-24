@@ -18,6 +18,7 @@ const postSelect = {
   deletedByRole: true,
   author: {
   select: {
+    id: true,
     nickname: true,
     avatarUrl: true,
   }
@@ -83,10 +84,12 @@ async function updatePost(data) {
 
   if (data.title !== undefined) {
     payload.title = data.title;
+    payload.titleEn = null; // 原文已改，清空英文译文缓存，下次翻译重新生成
   }
 
   if (data.content !== undefined) {
     payload.content = data.content;
+    payload.contentEn = null; // 原文已改，清空英文译文缓存，下次翻译重新生成
   }
 
   if (data.type !== undefined) {

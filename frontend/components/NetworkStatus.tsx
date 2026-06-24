@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
+import { useLang } from '../contexts/LanguageContext';
 
 // 监听断网/恢复，顶部横幅提示
 export const NetworkStatus: React.FC = () => {
+  const { t } = useLang();
   const [offline, setOffline] = useState(typeof navigator !== 'undefined' && !navigator.onLine);
   const [justRecovered, setJustRecovered] = useState(false);
 
@@ -29,7 +31,7 @@ export const NetworkStatus: React.FC = () => {
     return (
       <div className="fixed top-0 inset-x-0 z-[100] bg-red-500 text-white text-sm font-bold py-2 px-4 flex items-center justify-center gap-2 shadow-md">
         <WifiOff size={16} />
-        网络断开了，部分功能暂时不可用
+        {t('网络断开了，部分功能暂时不可用', 'You’re offline — some features are unavailable')}
       </div>
     );
   }
@@ -38,7 +40,7 @@ export const NetworkStatus: React.FC = () => {
     return (
       <div className="fixed top-0 inset-x-0 z-[100] bg-green-600 text-white text-sm font-bold py-2 px-4 flex items-center justify-center gap-2 shadow-md animate-fadeIn">
         <Wifi size={16} />
-        网络已恢复
+        {t('网络已恢复', 'Back online')}
       </div>
     );
   }

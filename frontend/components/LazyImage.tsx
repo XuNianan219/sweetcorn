@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ImageOff } from 'lucide-react';
+import { useLang } from '../contexts/LanguageContext';
 
 interface LazyImageProps {
   src: string;
@@ -11,6 +12,7 @@ interface LazyImageProps {
 
 // 图片渐入：加载前淡黄骨架占位，加载完成淡入，失败显示占位
 export const LazyImage: React.FC<LazyImageProps> = ({ src, alt = '', className = '', aspectRatio }) => {
+  const { t } = useLang();
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
@@ -26,7 +28,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({ src, alt = '', className =
       {error ? (
         <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-gray-300 text-xs font-medium">
           <ImageOff size={20} />
-          图片加载失败
+          {t('图片加载失败', 'Image failed to load')}
         </span>
       ) : (
         <motion.img

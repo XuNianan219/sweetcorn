@@ -3,16 +3,21 @@ import { CalendarDays, ExternalLink, MapPin, Star } from 'lucide-react';
 import {
   type EventItem,
   EVENT_TYPE_META,
+  EVENT_TYPE_META_EN,
   countdownText,
   formatEventDate,
 } from '../../services/eventsService';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface PinnedEventBannerProps {
   event: EventItem;
 }
 
 export const PinnedEventBanner: React.FC<PinnedEventBannerProps> = ({ event }) => {
+  const { t, lang } = useLang();
   const meta = EVENT_TYPE_META[event.eventType];
+  const metaLabel = lang === 'en' ? EVENT_TYPE_META_EN[event.eventType].label : meta.label;
+  const metaCta = lang === 'en' ? EVENT_TYPE_META_EN[event.eventType].cta : meta.cta;
 
   return (
     <div className="relative rounded-[2rem] overflow-hidden shadow-sm border border-green-50 bg-white">
@@ -28,7 +33,7 @@ export const PinnedEventBanner: React.FC<PinnedEventBannerProps> = ({ event }) =
           )}
           <span className="absolute top-4 left-4 flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-full text-xs font-black shadow">
             <Star size={12} className="fill-white" />
-            置顶推荐
+            {t('置顶推荐', 'Featured')}
           </span>
         </div>
 
@@ -36,7 +41,7 @@ export const PinnedEventBanner: React.FC<PinnedEventBannerProps> = ({ event }) =
         <div className="p-6 md:p-8 flex flex-col justify-center gap-3 bg-[#fcf9e8]">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-green-100 text-green-700">
-              {meta.emoji} {meta.label}
+              {meta.emoji} {metaLabel}
             </span>
             {event.celebrities.map((c) => (
               <span key={c} className="px-2 py-0.5 rounded-full text-xs font-bold bg-white text-green-600">
@@ -51,13 +56,13 @@ export const PinnedEventBanner: React.FC<PinnedEventBannerProps> = ({ event }) =
           )}
 
           <div className="inline-flex w-fit items-center gap-2 px-4 py-2 bg-white rounded-2xl text-green-700 font-black shadow-sm">
-            ⏳ {countdownText(event.startAt)}
+            ⏳ {countdownText(event.startAt, lang)}
           </div>
 
           <div className="flex flex-wrap gap-3 text-xs text-gray-500 font-medium">
             <span className="flex items-center gap-1">
               <CalendarDays size={13} className="text-green-500" />
-              {formatEventDate(event.startAt)}
+              {formatEventDate(event.startAt, lang)}
             </span>
             {event.location && (
               <span className="flex items-center gap-1">
@@ -74,7 +79,7 @@ export const PinnedEventBanner: React.FC<PinnedEventBannerProps> = ({ event }) =
               rel="noopener noreferrer"
               className="mt-1 inline-flex w-fit items-center gap-2 px-6 py-3 gradient-ningyuzhi text-green-950 font-black rounded-2xl hover:scale-[1.03] transition-transform shadow"
             >
-              {meta.cta}
+              {metaCta}
               <ExternalLink size={16} />
             </a>
           )}

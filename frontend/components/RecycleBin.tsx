@@ -8,6 +8,7 @@ import {
   type RecycledPosts,
 } from '../services/recycleService';
 import { getCategoryName } from '../constants/categories';
+import { useLang } from '../contexts/LanguageContext';
 
 type GroupKey = 'discussion' | 'media' | 'article' | 'travel';
 
@@ -27,18 +28,19 @@ const EMPTY: RecycledPosts = {
 };
 
 // 删除时间 → 「X 天前删除」
-function deletedAgo(iso: string): string {
+function deletedAgo(iso: string, lang: 'zh' | 'en'): string {
   const diff = Date.now() - new Date(iso).getTime();
   if (Number.isNaN(diff)) return '';
   const days = Math.floor(diff / (24 * 3600 * 1000));
-  if (days >= 1) return `${days} 天前删除`;
+  if (days >= 1) return lang === 'en' ? `deleted ${days}d ago` : `${days} 天前删除`;
   const hours = Math.floor(diff / (3600 * 1000));
-  if (hours >= 1) return `${hours} 小时前删除`;
+  if (hours >= 1) return lang === 'en' ? `deleted ${hours}h ago` : `${hours} 小时前删除`;
   const mins = Math.floor(diff / (60 * 1000));
-  return `${Math.max(1, mins)} 分钟前删除`;
+  return lang === 'en' ? `deleted ${Math.max(1, mins)}m ago` : `${Math.max(1, mins)} 分钟前删除`;
 }
 
 export const RecycleBin: React.FC = () => {
+  const { t, lang } = useLang();
   const [data, setData] = useState<RecycledPosts>(EMPTY);
   const [activeTab, setActiveTab] = useState<GroupKey>('discussion');
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export const RecycleBin: React.FC = () => {
         const firstWithData = TABS.find((t) => res.counts[t.key] > 0);
         if (firstWithData) setActiveTab(firstWithData.key);
       })
-      .catch((e) => setError(e?.message || '加载失败'))
+      .catch((e) => setError(e?.message || t('加载失败', 'Failed to load')))
       .finally(() => setLoading(false));
   };
 
@@ -76,21 +78,21 @@ export const RecycleBin: React.FC = () => {
       await restorePost(item.id);
       removeLocal(item.category as GroupKey, item.id);
     } catch (e: any) {
-      setError(e?.message || '恢复失败');
+      setError(e?.message || t('恢复失败', 'Restore failed'));
     } finally {
       setBusyId(null);
     }
   };
 
   const handlePermanentDelete = async (item: DeletedPost) => {
-    if (!window.confirm('永久删除后不可恢复，确认删除吗？')) return;
+    if (!window.confirm(t('永久删除后不可恢复，确认删除吗？', 'Permanent deletion cannot be undone. Continue?'))) return;
     setBusyId(item.id);
     setError('');
     try {
       await permanentDeletePost(item.id);
       removeLocal(item.category as GroupKey, item.id);
     } catch (e: any) {
-      setError(e?.message || '删除失败');
+      setError(e?.message || t('删除失败', 'Delete failed'));
     } finally {
       setBusyId(null);
     }
@@ -116,7 +118,7 @@ export const RecycleBin: React.FC = () => {
               }`}
             >
               <span>{tab.emoji}</span>
-              {getCategoryName(tab.key)}
+              {getCategoryName(tab.key, lang)}
               {count > 0 && (
                 <span
                   className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none ${
@@ -142,7 +144,7 @@ export const RecycleBin: React.FC = () => {
       ) : list.length === 0 ? (
         <div className="py-16 text-center border-4 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/40">
           <FolderOpen size={44} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400 font-black">这里还没有内容</p>
+          <p className="text-gray-400 font-black">{t('这里还没有内容', 'Nothing here yet')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -163,12 +165,12 @@ export const RecycleBin: React.FC = () => {
               <div className="flex-grow min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-green-50 text-green-700">
-                    {getCategoryName(item.category)}
+                    {getCategoryName(item.category, lang)}
                   </span>
-                  <span className="text-[11px] text-gray-400 font-bold">{deletedAgo(item.deletedAt)}</span>
+                  <span className="text-[11px] text-gray-400 font-bold">{deletedAgo(item.deletedAt, lang)}</span>
                 </div>
                 <h3 className="font-black text-gray-800 line-clamp-1">
-                  {item.title || item.content?.slice(0, 50) || '无标题内容'}
+                  {item.title || item.content?.slice(0, 50) || t('无标题内容', 'Untitled')}
                 </h3>
               </div>
 
@@ -177,19 +179,19 @@ export const RecycleBin: React.FC = () => {
                   onClick={() => handleRestore(item)}
                   disabled={busyId === item.id}
                   className="flex items-center gap-1.5 px-3.5 py-2 gradient-ningyuzhi text-green-950 rounded-xl font-black text-sm hover:scale-[1.03] transition-transform disabled:opacity-50"
-                  title="恢复到原分区"
+                  title={t('恢复到原分区', 'Restore to original section')}
                 >
                   {busyId === item.id ? <Loader2 size={15} className="animate-spin" /> : <RotateCcw size={15} />}
-                  恢复
+                  {t('恢复', 'Restore')}
                 </button>
                 <button
                   onClick={() => handlePermanentDelete(item)}
                   disabled={busyId === item.id}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-100 transition-colors disabled:opacity-50"
-                  title="永久删除"
+                  title={t('永久删除', 'Delete forever')}
                 >
                   <Trash2 size={15} />
-                  永久删除
+                  {t('永久删除', 'Delete forever')}
                 </button>
               </div>
             </div>

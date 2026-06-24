@@ -87,7 +87,3 @@ export const MOCK_MERCH: MerchItem[] = [
 export const MOCK_TRAVEL = [
   { id: '1', city: '无锡', highlights: ['惠山古镇', '太湖鼋头渚', '拈花湾'], image: 'https://picsum.photos/seed/wuxi/800/400' },
 ];
-
-export const MOCK_TIMELINE = [
-  { id: '1', date: '2023-08-15', title: '初遇', description: '电视剧《夏日回响》正式开机。' },
-];

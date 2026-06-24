@@ -5,10 +5,12 @@ import {
   CalendarCheck,
   CalendarX,
   Heart,
+  Lightbulb,
   Loader2,
   MessageCircle,
   Trash2,
   UserPlus,
+  XCircle,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import {
@@ -20,6 +22,7 @@ import {
 } from '../services/notificationService';
 import { timeAgo } from '../services/commentService';
 import { showSuccess } from '../utils/toast';
+import { useLang } from '../contexts/LanguageContext';
 
 const PAGE_SIZE = 20;
 
@@ -37,6 +40,10 @@ function TypeIcon({ type }: { type: string }) {
       return <CalendarCheck className={`${cls} text-green-600`} />;
     case 'event_rejected':
       return <CalendarX className={`${cls} text-red-500`} />;
+    case 'idea_approved':
+      return <Lightbulb className={`${cls} text-green-600`} />;
+    case 'idea_rejected':
+      return <XCircle className={`${cls} text-red-500`} />;
     default:
       return <Bell className={`${cls} text-green-600`} />;
   }
@@ -44,6 +51,7 @@ function TypeIcon({ type }: { type: string }) {
 
 export const Notifications: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -99,7 +107,7 @@ export const Notifications: React.FC = () => {
     try {
       await markAllAsRead();
       setItems((prev) => prev.map((x) => ({ ...x, isRead: true })));
-      showSuccess('已全部标记为已读');
+      showSuccess(t('已全部标记为已读', 'All marked as read'));
     } catch {
       /* toast handled */
     }
@@ -108,14 +116,14 @@ export const Notifications: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto py-6 px-4 pb-24 md:pb-16 animate-fadeIn">
       <PageHeader
-        title="通知"
+        title={t('通知', 'Notifications')}
         rightSlot={
           items.some((n) => !n.isRead) ? (
             <button
               onClick={handleMarkAll}
               className="px-3 py-1.5 text-sm font-bold text-green-700 bg-green-50 hover:bg-green-100 rounded-xl transition-colors"
             >
-              全部已读
+              {t('全部已读', 'Mark all read')}
             </button>
           ) : null
         }
@@ -136,7 +144,7 @@ export const Notifications: React.FC = () => {
       ) : items.length === 0 ? (
         <div className="py-20 text-center">
           <Bell size={44} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400 font-bold">还没有通知，去逛逛吧</p>
+          <p className="text-gray-400 font-bold">{t('还没有通知，去逛逛吧', 'No notifications yet — go explore')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -175,7 +183,7 @@ export const Notifications: React.FC = () => {
                   <button
                     onClick={(e) => handleDelete(e, n.id)}
                     disabled={busyId === n.id}
-                    aria-label="删除通知"
+                    aria-label={t('删除通知', 'Delete notification')}
                     className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
                   >
                     {busyId === n.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
@@ -193,7 +201,7 @@ export const Notifications: React.FC = () => {
                 className="px-5 py-2 text-sm font-bold text-green-700 bg-green-50 hover:bg-green-100 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {loadingMore && <Loader2 size={15} className="animate-spin" />}
-                加载更多
+                {t('加载更多', 'Load more')}
               </button>
             </div>
           )}

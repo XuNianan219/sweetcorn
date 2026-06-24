@@ -1,11 +1,13 @@
 import React from 'react';
-import { 
-  Star, Shield, Award, Music, Film, Mic2, Briefcase, 
+import {
+  Star, Shield, Award, Music, Film, Mic2, Briefcase,
   Heart, Calendar, MapPin, TrendingUp, Globe, Sparkles,
   ExternalLink, UserCheck
 } from 'lucide-react';
+import { useLang } from '../contexts/LanguageContext';
 
 export const CelebA: React.FC = () => {
+  const { t } = useLang();
   return (
     <div className="space-y-12 animate-fadeIn pb-20">
       {/* 1. Hero Header Section */}
@@ -15,31 +17,31 @@ export const CelebA: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full w-fit border border-white/30">
               <Sparkles size={16} className="text-yellow-200" />
-              <span className="text-white text-xs font-black tracking-widest uppercase">极速小鱼</span>
+              <span className="text-white text-xs font-black tracking-widest uppercase">{t('极速小鱼', 'Jisu Xiaoyu')}</span>
             </div>
-            <h1 className="text-7xl md:text-8xl font-black text-white drop-shadow-2xl">梓渝 <span className="text-3xl font-medium tracking-normal opacity-80">Ziyu</span></h1>
+            <h1 className="text-7xl md:text-8xl font-black text-white drop-shadow-2xl">{t('梓渝', 'Ziyu')} <span className="text-3xl font-medium tracking-normal opacity-80">Ziyu</span></h1>
             <p className="text-white/90 text-xl font-medium tracking-widest flex items-center gap-4">
               <span className="flex items-center gap-1"><Calendar size={20}/> 2002.07.06</span>
-              <span className="flex items-center gap-1"><MapPin size={20}/> 江苏连云港</span>
+              <span className="flex items-center gap-1"><MapPin size={20}/> {t('江苏连云港', 'Lianyungang, Jiangsu')}</span>
             </p>
           </div>
           <div className="text-right text-white/60 text-sm font-medium italic">
-            "星渝色 · 幻海逐梦，天光破晓"
+            {t('"星渝色 · 幻海逐梦，天光破晓"', '"Starlight dreams across the sea, dawn breaks the sky"')}
           </div>
         </div>
         <img 
           src="https://picsum.photos/seed/ziyu_main/1200/800" 
           className="absolute inset-0 w-full h-full object-cover -z-10 mix-blend-overlay opacity-50 group-hover:scale-105 transition-transform duration-1000"
-          alt="梓渝 Profile"
+          alt="Ziyu Profile"
         />
       </div>
 
       {/* 2. Fast Stats Grid - Removed Group Stat */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[
-          { icon: Mic2, label: '核心身份', value: '歌手 / 演员', color: 'text-purple-600' },
-          { icon: Globe, label: '全球面孔', value: 'TC Candler 第28位', color: 'text-indigo-600' },
-          { icon: TrendingUp, label: '音乐战力', value: '单曲播放量破亿', color: 'text-pink-600' },
+          { icon: Mic2, label: t('核心身份', 'Core identity'), value: t('歌手 / 演员', 'Singer / Actor'), color: 'text-purple-600' },
+          { icon: Globe, label: t('全球面孔', 'Global face'), value: t('TC Candler 第28位', 'TC Candler #28'), color: 'text-indigo-600' },
+          { icon: TrendingUp, label: t('音乐战力', 'Music power'), value: t('单曲播放量破亿', '100M+ single streams'), color: 'text-pink-600' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-6 hover:shadow-md transition-shadow">
             <div className={`w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center ${stat.color}`}>
@@ -58,28 +60,28 @@ export const CelebA: React.FC = () => {
         <div className="lg:col-span-2 space-y-10">
           <section className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-50">
             <h2 className="text-2xl font-black text-[#7A67EE] mb-8 flex items-center gap-3">
-              <Star className="fill-current" /> 演艺历程 · Milestones
+              <Star className="fill-current" /> {t('演艺历程', 'Career')} · Milestones
             </h2>
             <div className="space-y-8 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
               <div className="relative pl-10">
                 <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-purple-100 border-4 border-white shadow-sm flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-purple-600" /></div>
-                <h4 className="font-black text-gray-900">2020-2021 | 少年集结，初心启程</h4>
+                <h4 className="font-black text-gray-900">{t('2020-2021 | 少年集结，初心启程', '2020-2021 | Debut beginnings')}</h4>
                 <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                  综艺《少年之名》初露锋芒，随后在《青春有你第三季》中凭借极具个人风格的表现积累了深厚的粉丝基础，展现出坚韧且纯粹的艺术态度。
+                  {t('综艺《少年之名》初露锋芒，随后在《青春有你第三季》中凭借极具个人风格的表现积累了深厚的粉丝基础，展现出坚韧且纯粹的艺术态度。', 'First stood out on the show "Boys Planet," then built a strong fanbase on "Youth With You S3" with a distinctive style, showing a resilient and pure artistic spirit.')}
                 </p>
               </div>
               <div className="relative pl-10">
                 <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-blue-100 border-4 border-white shadow-sm flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-blue-600" /></div>
-                <h4 className="font-black text-gray-900">2023-2024 | 影视跨界，多向生长</h4>
+                <h4 className="font-black text-gray-900">{t('2023-2024 | 影视跨界，多向生长', '2023-2024 | Crossing into film & TV')}</h4>
                 <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                  参演《将军在下》《段秘书为何那样呢》等精品短剧。在此期间，个人舞台魅力在各大盛典中不断深化，奠定影视音乐双栖基础。
+                  {t('参演《将军在下》《段秘书为何那样呢》等精品短剧。在此期间，个人舞台魅力在各大盛典中不断深化，奠定影视音乐双栖基础。', 'Starred in short dramas such as "The General Below" and "Why Is Secretary Duan Like That." His stage presence deepened at major galas, laying a dual foundation in film and music.')}
                 </p>
               </div>
               <div className="relative pl-10">
                 <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-indigo-100 border-4 border-white shadow-sm flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-indigo-600" /></div>
-                <h4 className="font-black text-gray-900">2025-2026 | 全面爆发，巅峰跨越</h4>
+                <h4 className="font-black text-gray-900">{t('2025-2026 | 全面爆发，巅峰跨越', '2025-2026 | Breakout to the top')}</h4>
                 <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                  主演《逆爱》吴所畏一角凭原声大火。单曲《泥潭》网易云播放破亿。2026年获微博之夜年度星光人物。首部电影《为我的心动买单》定档520。个人巡演“游点意思”多城秒空收官。
+                  {t('主演《逆爱》吴所畏一角凭原声大火。单曲《泥潭》网易云播放破亿。2026年获微博之夜年度星光人物。首部电影《为我的心动买单》定档520。个人巡演"游点意思"多城秒空收官。', 'Lead role as Wu Suowei in "Reverse Love" went viral. His single "Mire" passed 100M plays on NetEase. Named Star of the Year at the 2026 Weibo Night. His first film premiered on 5/20, and his solo tour sold out across multiple cities.')}
                 </p>
               </div>
             </div>
@@ -87,43 +89,43 @@ export const CelebA: React.FC = () => {
 
           {/* 4. Representative Works Section */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-black text-gray-900 px-4">代表作品 · Works</h2>
+            <h2 className="text-2xl font-black text-gray-900 px-4">{t('代表作品', 'Works')} · Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-50 shadow-sm space-y-6">
                 <div className="flex items-center gap-3 text-purple-600">
                   <Music size={24} />
-                  <h3 className="font-black text-xl">音乐作品</h3>
+                  <h3 className="font-black text-xl">{t('音乐作品', 'Music')}</h3>
                 </div>
                 <ul className="space-y-4">
                   <li className="flex justify-between items-center group">
-                    <span className="text-sm font-bold text-gray-700">《泥潭》 <span className="text-[10px] text-pink-500 bg-pink-50 px-2 py-0.5 rounded ml-2">破亿神曲</span></span>
+                    <span className="text-sm font-bold text-gray-700">{t('《泥潭》', '"Mire"')} <span className="text-[10px] text-pink-500 bg-pink-50 px-2 py-0.5 rounded ml-2">{t('破亿神曲', '100M+ hit')}</span></span>
                     <button className="text-gray-300 group-hover:text-purple-500 transition-colors"><ExternalLink size={14}/></button>
                   </li>
                   <li className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-gray-700">《下一页》 <span className="text-[10px] text-gray-400 font-normal ml-2">微博网友喜爱奖</span></span>
+                    <span className="text-sm font-bold text-gray-700">{t('《下一页》', '"Next Page"')} <span className="text-[10px] text-gray-400 font-normal ml-2">{t('微博网友喜爱奖', 'Weibo Fan Favorite')}</span></span>
                   </li>
                   <li className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-gray-700">《萤火星球》</span>
+                    <span className="text-sm font-bold text-gray-700">{t('《萤火星球》', '"Firefly Planet"')}</span>
                   </li>
                 </ul>
               </div>
               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-50 shadow-sm space-y-6">
                 <div className="flex items-center gap-3 text-blue-600">
                   <Film size={24} />
-                  <h3 className="font-black text-xl">影视作品</h3>
+                  <h3 className="font-black text-xl">{t('影视作品', 'Film & TV')}</h3>
                 </div>
                 <ul className="space-y-4">
                   <li className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-gray-700">《为我的心动买单》 <span className="text-[10px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded ml-2">电影 · 520定档</span></span>
+                    <span className="text-sm font-bold text-gray-700">{t('《为我的心动买单》', '"Pay for My Heartbeat"')} <span className="text-[10px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded ml-2">{t('电影 · 520定档', 'Film · premieres 5/20')}</span></span>
                   </li>
                   <li className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-gray-700">《逆爱》 <span className="text-[10px] text-gray-400 font-normal ml-2">饰 吴所畏</span></span>
+                    <span className="text-sm font-bold text-gray-700">{t('《逆爱》', '"Reverse Love"')} <span className="text-[10px] text-gray-400 font-normal ml-2">{t('饰 吴所畏', 'as Wu Suowei')}</span></span>
                   </li>
                   <li className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-gray-700">《三嫁魔君》</span>
+                    <span className="text-sm font-bold text-gray-700">{t('《三嫁魔君》', '"Thrice Married to the Demon Lord"')}</span>
                   </li>
                   <li className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-gray-700">《将军在下》 / 《段秘书》</span>
+                    <span className="text-sm font-bold text-gray-700">{t('《将军在下》 / 《段秘书》', '"The General Below" / "Secretary Duan"')}</span>
                   </li>
                 </ul>
               </div>
@@ -136,22 +138,22 @@ export const CelebA: React.FC = () => {
           {/* 商业版图 */}
           <div className="bg-[#7A67EE]/5 rounded-[3rem] p-8 border border-[#7A67EE]/10 space-y-8">
             <h3 className="font-black text-[#7A67EE] flex items-center gap-2">
-              <Briefcase size={20} /> 商业代言 & 事业
+              <Briefcase size={20} /> {t('商业代言 & 事业', 'Endorsements & Business')}
             </h3>
             <div className="space-y-6">
               <div className="space-y-2">
-                <p className="text-xs font-black text-gray-400 uppercase">品牌代言</p>
+                <p className="text-xs font-black text-gray-400 uppercase">{t('品牌代言', 'Brand deals')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {['李子园 VitaYoung', '鸭鸭品牌代言', 'GISMOW 全球代言', 'QQ音乐20周年大使'].map(brand => (
+                  {[t('李子园 VitaYoung', 'Liziyuan VitaYoung'), t('鸭鸭品牌代言', 'YAYA endorsement'), t('GISMOW 全球代言', 'GISMOW global ambassador'), t('QQ音乐20周年大使', 'QQ Music 20th anniv. ambassador')].map(brand => (
                     <span key={brand} className="text-[10px] font-black bg-white px-3 py-1.5 rounded-xl border border-purple-100 text-purple-700">{brand}</span>
                   ))}
                 </div>
               </div>
               <div className="space-y-3 pt-4 border-t border-purple-100">
-                <p className="text-xs font-black text-gray-400 uppercase">事业版图 (BOSS ZIYU)</p>
+                <p className="text-xs font-black text-gray-400 uppercase">{t('事业版图 (BOSS ZIYU)', 'Business map (BOSS ZIYU)')}</p>
                 <div className="bg-white/60 p-4 rounded-2xl space-y-2">
-                  <p className="text-xs font-black text-gray-700">北京瑞鹤文化传媒 <span className="text-[10px] font-normal opacity-60">法定代表人</span></p>
-                  <p className="text-xs font-black text-gray-700">北京极速小鱼文化工作室 <span className="text-[10px] font-normal opacity-60">100%持股</span></p>
+                  <p className="text-xs font-black text-gray-700">{t('北京瑞鹤文化传媒', 'Beijing Ruihe Culture & Media')} <span className="text-[10px] font-normal opacity-60">{t('法定代表人', 'Legal representative')}</span></p>
+                  <p className="text-xs font-black text-gray-700">{t('北京极速小鱼文化工作室', 'Beijing Jisu Xiaoyu Culture Studio')} <span className="text-[10px] font-normal opacity-60">{t('100%持股', '100% owned')}</span></p>
                 </div>
               </div>
             </div>
@@ -160,20 +162,20 @@ export const CelebA: React.FC = () => {
           {/* 个人荣誉 */}
           <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-gray-100 space-y-6">
             <h3 className="font-bold text-gray-900 flex items-center gap-2">
-              <Award size={20} className="text-yellow-500 fill-yellow-500" /> 核心荣誉
+              <Award size={20} className="text-yellow-500 fill-yellow-500" /> {t('核心荣誉', 'Key Honors')}
             </h3>
             <div className="space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-8 h-8 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0 text-yellow-600"><Award size={16}/></div>
-                <p className="text-sm font-black text-gray-700">2026 微博之夜 · 年度星光人物</p>
+                <p className="text-sm font-black text-gray-700">{t('2026 微博之夜 · 年度星光人物', '2026 Weibo Night · Star of the Year')}</p>
               </div>
               <div className="flex items-start gap-4">
                 <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-600"><Globe size={16}/></div>
-                <p className="text-sm font-black text-gray-700">2025 全球百大最美面孔 · 第28位</p>
+                <p className="text-sm font-black text-gray-700">{t('2025 全球百大最美面孔 · 第28位', '2025 Top 100 Most Beautiful Faces · #28')}</p>
               </div>
               <div className="flex items-start gap-4">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600"><Mic2 size={16}/></div>
-                <p className="text-sm font-black text-gray-700">年度喜爱演出 · “游”点意思巡演</p>
+                <p className="text-sm font-black text-gray-700">{t('年度喜爱演出 · “游”点意思巡演', 'Favorite Show of the Year · solo tour')}</p>
               </div>
             </div>
           </div>
@@ -181,12 +183,12 @@ export const CelebA: React.FC = () => {
           {/* 公益足迹 */}
           <div className="bg-red-50/50 rounded-[3rem] p-8 border border-red-100 space-y-6">
             <h3 className="font-black text-red-600 flex items-center gap-2">
-              <Heart size={20} className="fill-current" /> 公益大使
+              <Heart size={20} className="fill-current" /> {t('公益大使', 'Charity Ambassador')}
             </h3>
             <ul className="space-y-3">
-              <li className="text-xs font-bold text-red-700 flex items-center gap-2">• 文明交通宣传大使</li>
-              <li className="text-xs font-bold text-red-700 flex items-center gap-2">• “益耳行动”爱心传播大使</li>
-              <li className="text-[10px] text-red-500 leading-relaxed italic">曾创作公益单曲并捐款助力听障儿童康复</li>
+              <li className="text-xs font-bold text-red-700 flex items-center gap-2">{t('• 文明交通宣传大使', '• Road Safety Ambassador')}</li>
+              <li className="text-xs font-bold text-red-700 flex items-center gap-2">{t('• “益耳行动”爱心传播大使', '• "Caring Ears" Campaign Ambassador')}</li>
+              <li className="text-[10px] text-red-500 leading-relaxed italic">{t('曾创作公益单曲并捐款助力听障儿童康复', 'Created a charity single and donated to support hearing-impaired children')}</li>
             </ul>
           </div>
         </div>
@@ -195,17 +197,17 @@ export const CelebA: React.FC = () => {
       {/* 2026 Tour Footer Promo */}
       <div className="bg-gray-900 rounded-[4rem] p-12 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10">
         <div className="space-y-4 relative z-10 text-center md:text-left">
-          <h2 className="text-4xl font-black">梓渝 “游” 点意思 2026</h2>
-          <p className="text-gray-400 font-medium tracking-widest uppercase text-sm">National Concert Tour · 全国巡回演唱会</p>
+          <h2 className="text-4xl font-black">{t('梓渝 “游” 点意思 2026', 'Ziyu Solo Tour 2026')}</h2>
+          <p className="text-gray-400 font-medium tracking-widest uppercase text-sm">National Concert Tour · {t('全国巡回演唱会', 'National Tour')}</p>
           <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-6">
-            {['南京站', '贵阳站', '武汉站', '厦门收官站'].map(city => (
+            {[t('南京站', 'Nanjing'), t('贵阳站', 'Guiyang'), t('武汉站', 'Wuhan'), t('厦门收官站', 'Xiamen finale')].map(city => (
               <span key={city} className="px-5 py-2 bg-white/10 backdrop-blur-md rounded-full text-xs font-black border border-white/10">{city} (Sold Out)</span>
             ))}
           </div>
         </div>
         <div className="flex-shrink-0 relative z-10">
           <div className="bg-white text-gray-900 px-10 py-5 rounded-3xl font-black text-xl shadow-2xl hover:scale-110 transition-transform cursor-pointer">
-            回顾精彩现场
+            {t('回顾精彩现场', 'Watch highlights')}
           </div>
         </div>
         {/* Decorative background circle */}

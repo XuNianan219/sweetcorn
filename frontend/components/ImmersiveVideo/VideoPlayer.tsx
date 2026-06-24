@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Heart, Pause, Volume2, VolumeX } from 'lucide-react';
 import type { FeedPost } from '../../services/feedService';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface VideoPlayerProps {
   post: FeedPost;
@@ -19,6 +20,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onLike,
   preload,
 }) => {
+  const { t } = useLang();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -146,7 +148,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onToggleMute();
         }}
         className="absolute bottom-6 right-4 w-11 h-11 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-colors z-20"
-        title={muted ? '取消静音' : '静音'}
+        title={muted ? t('取消静音', 'Unmute') : t('静音', 'Mute')}
       >
         {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
       </button>

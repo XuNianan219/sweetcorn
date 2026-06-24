@@ -1,103 +1,258 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, MessageCircle, Play, Store } from 'lucide-react';
 import { getProduct, type Product } from '../services/merchandiseService';
+import { getFollowStatus, toggleFollow } from '../services/followService';
+import { useCurrentUser } from '../contexts/UserContext';
 import PageHeader from '../components/PageHeader';
+import { LazyImage } from '../components/LazyImage';
+import { ChatDrawer } from '../components/ChatDrawer';
+import { showInfo } from '../utils/toast';
+import { useLang } from '../contexts/LanguageContext';
+import { useAutoTranslate } from '../hooks/useAutoTranslate';
 
 export const MerchandiseProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useCurrentUser();
+  const { t } = useLang();
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentImage, setCurrentImage] = useState(0);
+  // 英文模式下显示商品名/描述的译文（命中数据库缓存则秒回）
+  const tr = useAutoTranslate('product', product?.id, {
+    name: product?.name || '',
+    description: product?.description || '',
+  });
+  // 主展示：-1 表示宣传视频，>=0 表示对应样图
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     getProduct(id)
-      .then(setProduct)
-      .catch(() => setError('商品不存在'))
+      .then((p) => {
+        setProduct(p);
+        setActiveIdx(p.videoUrl ? -1 : 0); // 有宣传视频则默认展示视频
+      })
+      .catch(() => setError(t('商品不存在', 'Product not found')))
       .finally(() => setLoading(false));
   }, [id]);
 
+  const seller = product?.seller || null;
+  const isSelfSeller = isLoggedIn && !!seller && user?.id === seller.id;
+
+  useEffect(() => {
+    if (!seller || !isLoggedIn || isSelfSeller) {
+      setFollowing(false);
+      return;
+    }
+    let cancelled = false;
+    getFollowStatus(seller.id)
+      .then((r) => !cancelled && setFollowing(r.following))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [seller, isLoggedIn, isSelfSeller]);
+
+  const handleFollow = async () => {
+    if (!isLoggedIn) {
+      showInfo(t('请先登录', 'Please log in first'));
+      navigate('/login');
+      return;
+    }
+    if (!seller || followBusy) return;
+    setFollowBusy(true);
+    const prev = following;
+    setFollowing(!prev);
+    try {
+      const r = await toggleFollow(seller.id);
+      setFollowing(r.following);
+    } catch {
+      setFollowing(prev);
+    } finally {
+      setFollowBusy(false);
+    }
+  };
+
+  const handleConsult = () => {
+    if (!isLoggedIn) {
+      showInfo(t('请先登录', 'Please log in first'));
+      navigate('/login');
+      return;
+    }
+    if (seller) setChatOpen(true); // 就地弹出聊天框
+  };
+
   if (loading) {
-    return <div className="text-center py-20 text-gray-400 text-sm">加载中...</div>;
+    return <div className="text-center py-20 text-gray-400 text-sm">{t('加载中...', 'Loading...')}</div>;
   }
   if (error || !product) {
     return (
       <div className="text-center py-20 space-y-4">
-        <p className="text-gray-400 text-sm">{error ?? '商品不存在'}</p>
-        <button
-          onClick={() => navigate(-1)}
-          className="text-green-600 underline text-sm"
-        >
-          返回
+        <p className="text-gray-400 text-sm">{error ?? t('商品不存在', 'Product not found')}</p>
+        <button onClick={() => navigate(-1)} className="text-green-600 underline text-sm">
+          {t('返回', 'Back')}
         </button>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20">
-      <PageHeader title="商品详情" />
+  const sellerIsUrl = !!seller?.avatarUrl && /^https?:\/\//.test(seller.avatarUrl);
+  const hasVideo = !!product.videoUrl;
 
-      {/* 图片 */}
-      {product.imageUrls.length > 0 && (
-        <div className="space-y-2">
-          <div className="w-full rounded-2xl overflow-hidden bg-gray-100 aspect-square">
+  return (
+    <div className="max-w-2xl mx-auto space-y-5 pb-28">
+      <PageHeader title={t('商品详情', 'Product')} />
+
+      {/* 主展示区：宣传视频 / 样图 */}
+      <div className="space-y-2">
+        <div className="w-full rounded-2xl overflow-hidden bg-black aspect-square">
+          {activeIdx === -1 && hasVideo ? (
+            <video
+              src={product.videoUrl}
+              controls
+              playsInline
+              poster={product.imageUrls[0]}
+              className="w-full h-full object-contain bg-black"
+            />
+          ) : (
             <img
-              src={product.imageUrls[currentImage]}
+              src={product.imageUrls[activeIdx] || product.imageUrls[0]}
               alt={product.name}
               className="w-full h-full object-cover"
             />
+          )}
+        </div>
+
+        {/* 缩略图：视频在最前 + 各样图 */}
+        {(hasVideo || product.imageUrls.length > 1) && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {hasVideo && (
+              <button
+                onClick={() => setActiveIdx(-1)}
+                className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${
+                  activeIdx === -1 ? 'border-green-500' : 'border-transparent'
+                }`}
+              >
+                <img src={product.imageUrls[0]} alt="" className="w-full h-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-white">
+                  <Play size={18} className="fill-current" />
+                </span>
+              </button>
+            )}
+            {product.imageUrls.map((url, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveIdx(idx)}
+                className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${
+                  activeIdx === idx ? 'border-green-500' : 'border-transparent'
+                }`}
+              >
+                <img src={url} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
           </div>
-          {product.imageUrls.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {product.imageUrls.map((url, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentImage(idx)}
-                  className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${
-                    currentImage === idx ? 'border-green-500' : 'border-transparent'
-                  }`}
-                >
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
+        )}
+      </div>
+
+      {/* 商品名 & 价格 */}
+      <div className="space-y-2">
+        <p className="font-bold text-green-700">
+          <span className="text-base align-text-top">¥</span>
+          <span className="text-3xl">{product.price}</span>
+        </p>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 leading-snug">{tr.name}</h1>
+        <div className="flex items-center gap-1 text-sm text-gray-400">
+          <Heart size={14} />
+          <span>{product.wantCount} {t('人想要', 'want this')}</span>
+        </div>
+      </div>
+
+      {/* 商家卡片 */}
+      {seller && (
+        <div className="bg-white rounded-2xl border border-green-50 shadow-sm p-4 flex items-center gap-3">
+          <button
+            onClick={() => navigate(`/users/${seller.id}`)}
+            className="w-12 h-12 rounded-full bg-green-50 overflow-hidden shrink-0 flex items-center justify-center text-2xl"
+          >
+            {sellerIsUrl ? (
+              <img src={seller.avatarUrl!} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span>🌽</span>
+            )}
+          </button>
+          <button onClick={() => navigate(`/users/${seller.id}`)} className="flex-grow min-w-0 text-left">
+            <div className="flex items-center gap-1.5">
+              <Store size={14} className="text-green-600 shrink-0" />
+              <span className="font-bold text-gray-800 truncate">{seller.nickname || t('玉米店铺', 'Corn Shop')}</span>
             </div>
+            <p className="text-xs text-gray-400 truncate mt-0.5">
+              {seller.bio?.trim() || t('甜玉米官方认证店铺', 'SweetCorn verified shop')}
+            </p>
+          </button>
+          {!isSelfSeller && (
+            <button
+              onClick={handleFollow}
+              disabled={followBusy}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
+                following
+                  ? 'border border-green-300 text-green-700 bg-white'
+                  : 'bg-green-700 text-white hover:bg-green-800'
+              }`}
+            >
+              {following ? t('已关注', 'Following') : t('+ 关注', '+ Follow')}
+            </button>
           )}
         </div>
       )}
 
-      {/* 商品名 & 价格 */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-black text-gray-900">{product.name}</h1>
-        <p className="text-3xl font-black text-green-700">¥{product.price}</p>
-        <div className="flex items-center gap-1 text-sm text-gray-400">
-          <Heart size={14} />
-          <span>{product.wantCount} 人想要</span>
-        </div>
-      </div>
-
       {/* 描述 */}
       {product.description && (
-        <div className="bg-gray-50 rounded-2xl p-4">
+        <div className="bg-white rounded-2xl border border-green-50 shadow-sm p-4">
+          <h2 className="text-sm font-bold text-gray-900 mb-2">{t('商品详情', 'Details')}</h2>
           <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {product.description}
+            {tr.description}
           </p>
         </div>
       )}
 
-      {/* 占位按钮 — 不做购买功能 */}
-      <div className="space-y-2">
-        <button
-          disabled
-          className="w-full py-4 bg-gray-200 text-gray-400 font-black text-base rounded-2xl cursor-not-allowed"
-        >
-          敬请期待
-        </button>
-        <p className="text-center text-xs text-gray-400">下单功能即将上线</p>
+      {/* 底部操作栏（淘宝式：咨询客服 + 想要） */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-yellow-100">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={handleConsult}
+            disabled={!seller || isSelfSeller}
+            className="flex flex-col items-center justify-center text-green-700 disabled:opacity-40"
+          >
+            <MessageCircle size={20} />
+            <span className="text-[11px] font-bold">{t('咨询客服', 'Contact')}</span>
+          </button>
+          <button
+            disabled
+            className="flex-grow py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-black rounded-2xl shadow-sm disabled:opacity-60"
+            title={t('下单功能即将上线', 'Ordering coming soon')}
+          >
+            {t('想要这个（即将上线）', 'I want this (coming soon)')}
+          </button>
+        </div>
       </div>
+
+      {/* 咨询客服：就地聊天框 */}
+      {seller && (
+        <ChatDrawer
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          userId={seller.id}
+          partnerName={seller.nickname || t('玉米店铺', 'Corn Shop')}
+          partnerAvatar={seller.avatarUrl}
+          kind="commerce"
+        />
+      )}
     </div>
   );
 };

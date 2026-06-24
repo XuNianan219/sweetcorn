@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { useCurrentUser } from '../contexts/UserContext';
+import { useLang } from '../contexts/LanguageContext';
 import { getUnreadCount } from '../services/notificationService';
 
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useCurrentUser();
+  const { t } = useLang();
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -35,8 +37,8 @@ export const NotificationBell: React.FC = () => {
   return (
     <button
       onClick={() => navigate('/notifications')}
-      aria-label="通知"
-      title="通知"
+      aria-label={t('通知', 'Notifications')}
+      title={t('通知', 'Notifications')}
       className="relative shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:text-green-600 transition-colors"
     >
       <Bell size={20} />

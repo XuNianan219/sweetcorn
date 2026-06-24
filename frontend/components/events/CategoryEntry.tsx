@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EventType } from '../../services/eventsService';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface CategoryEntryProps {
   type: EventType;
@@ -11,6 +12,7 @@ interface CategoryEntryProps {
 }
 
 export const CategoryEntry: React.FC<CategoryEntryProps> = ({ icon, title, count, active, onClick }) => {
+  const { t } = useLang();
   return (
     <button
       onClick={onClick}
@@ -23,7 +25,7 @@ export const CategoryEntry: React.FC<CategoryEntryProps> = ({ icon, title, count
       <div className="text-5xl mb-3">{icon}</div>
       <div className="text-xl font-black">{title}</div>
       <div className={`mt-1 text-sm font-bold ${active ? 'text-green-800' : 'text-gray-400'}`}>
-        {count} 个活动
+        {count} {t('个活动', 'events')}
       </div>
     </button>
   );

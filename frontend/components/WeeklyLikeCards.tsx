@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { type FeedPost } from '../services/feedService';
+import { useLang } from '../contexts/LanguageContext';
 
 interface WeeklyLikeCardsProps {
   posts: FeedPost[];
@@ -10,16 +11,17 @@ interface WeeklyLikeCardsProps {
 
 export const WeeklyLikeCards: React.FC<WeeklyLikeCardsProps> = ({ posts, onToggleLike }) => {
   const navigate = useNavigate();
+  const { t } = useLang();
   if (!posts || posts.length === 0) return null;
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-gray-700 tracking-wide mb-4">本周 Like</h2>
+      <h2 className="text-sm font-semibold text-gray-700 tracking-wide mb-4">{t('本周 Like', 'Weekly Likes')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {posts.map((post) => {
           const img =
             post.mediaType === 'image' && post.mediaUrls.length > 0 ? post.mediaUrls[0] : null;
-          const title = post.title?.trim() || post.content?.trim().slice(0, 30) || '无题';
+          const title = post.title?.trim() || post.content?.trim().slice(0, 30) || t('无题', 'Untitled');
           return (
             <article
               key={post.id}
@@ -48,7 +50,7 @@ export const WeeklyLikeCards: React.FC<WeeklyLikeCardsProps> = ({ posts, onToggl
                   {title}
                 </div>
                 <div className="text-xs text-gray-400 mt-1 truncate">
-                  {post.author?.nickname || '匿名玉米'}
+                  {post.author?.nickname || t('匿名玉米', 'Anonymous corn')}
                 </div>
               </div>
 
@@ -58,7 +60,7 @@ export const WeeklyLikeCards: React.FC<WeeklyLikeCardsProps> = ({ posts, onToggl
                   e.stopPropagation();
                   onToggleLike(post.id);
                 }}
-                aria-label={post.isLikedByMe ? '取消点赞' : '点赞'}
+                aria-label={post.isLikedByMe ? t('取消点赞', 'Unlike') : t('点赞', 'Like')}
                 className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur text-gray-400 hover:text-red-500 transition-colors shadow-sm"
               >
                 <Heart

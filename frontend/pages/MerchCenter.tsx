@@ -3,8 +3,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Search, Users, Flame, Sparkles, X, ShoppingBag, CreditCard, ClipboardList, Info, History, CheckCircle } from 'lucide-react';
 import { MOCK_MERCH } from '../constants';
+import { useLang } from '../contexts/LanguageContext';
+
+// 周边分类英文映射（值保持中文以兼容筛选）
+const MERCH_CAT_EN: Record<string, string> = {
+  全部: 'All',
+  棉花娃娃: 'Plushies',
+  亚克力: 'Acrylic',
+  纸类周边: 'Paper goods',
+  穿戴周边: 'Wearables',
+  亚克力摆件: 'Acrylic stand',
+};
 
 export const MerchCenter: React.FC = () => {
+  const { t } = useLang();
+  const tc = (c: string) => t(c, MERCH_CAT_EN[c] ?? c);
   const [activeCategory, setActiveCategory] = useState('全部');
   const [searchTerm, setSearchTerm] = useState('');
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -45,13 +58,13 @@ export const MerchCenter: React.FC = () => {
       <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <Package className="text-green-600" /> 饭制周边 · 应援商城
+            <Package className="text-green-600" /> {t('饭制周边 · 应援商城', 'Fan Merch · Support Shop')}
           </h1>
           <div className="relative w-full md:w-96">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
-            <input 
-              type="text" 
-              placeholder="搜索心动的周边..." 
+            <input
+              type="text"
+              placeholder={t('搜索心动的周边...', 'Search merch you love...')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl outline-none focus:ring-4 focus:ring-green-100 font-medium text-sm transition-all"
@@ -70,7 +83,7 @@ export const MerchCenter: React.FC = () => {
                   : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
               }`}
             >
-              {cat}
+              {tc(cat)}
             </button>
           ))}
         </div>
@@ -92,7 +105,7 @@ export const MerchCenter: React.FC = () => {
               />
               <div className="absolute top-4 left-4">
                 <span className="gradient-ningyuzhi text-green-900 text-[10px] font-black px-3 py-1 rounded-lg flex items-center gap-1 shadow-lg">
-                  <Flame size={12} className="text-red-500 fill-current" /> 拼团中
+                  <Flame size={12} className="text-red-500 fill-current" /> {t('拼团中', 'Group buy')}
                 </span>
               </div>
             </div>
@@ -103,11 +116,11 @@ export const MerchCenter: React.FC = () => {
               
               <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-[10px] font-black text-green-600">定金:¥</span>
+                  <span className="text-[10px] font-black text-green-600">{t('定金:¥', 'Deposit:¥')}</span>
                   <span className="text-xl font-black text-green-700">{item.deposit}</span>
                 </div>
                 <div className="flex items-center gap-1 text-[10px] font-black text-gray-400">
-                  <Users size={12} /> {item.currentJoined}人已买
+                  <Users size={12} /> {item.currentJoined}{t('人已买', ' bought')}
                 </div>
               </div>
 
@@ -127,11 +140,11 @@ export const MerchCenter: React.FC = () => {
       {/* Creative Banner */}
       <div className="gradient-ningyuzhi rounded-[3rem] p-10 text-green-950 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
         <div className="space-y-2 text-center md:text-left">
-          <h2 className="text-3xl font-black">周边创意征集</h2>
-          <p className="opacity-80 font-medium italic">你有绝佳的周边点子吗？上传你的设计稿，我们来帮你成团！</p>
+          <h2 className="text-3xl font-black">{t('周边创意征集', 'Merch Idea Call')}</h2>
+          <p className="opacity-80 font-medium italic">{t('你有绝佳的周边点子吗？上传你的设计稿，我们来帮你成团！', 'Got a great merch idea? Upload your design and we’ll help rally a group buy!')}</p>
         </div>
         <button className="px-12 py-5 bg-white text-green-900 font-black rounded-2xl hover:scale-105 transition-transform shadow-lg">
-          我要投递设计
+          {t('我要投递设计', 'Submit a design')}
         </button>
       </div>
 
@@ -141,14 +154,14 @@ export const MerchCenter: React.FC = () => {
           <Sparkles size={32} />
         </div>
         <div className="flex-grow space-y-2 text-center md:text-left">
-          <h3 className="text-2xl font-black text-gray-900">购买登记 & 积分奖励</h3>
-          <p className="text-gray-500 font-medium italic">每一份记录都将累积为应援乐园的专属积分，支持您在活动区参与应援和公益。</p>
+          <h3 className="text-2xl font-black text-gray-900">{t('购买登记 & 积分奖励', 'Purchase Log & Point Rewards')}</h3>
+          <p className="text-gray-500 font-medium italic">{t('每一份记录都将累积为应援乐园的专属积分，支持您在活动区参与应援和公益。', 'Every record earns exclusive points to spend on support and charity activities.')}</p>
         </div>
-        <button 
+        <button
           onClick={() => setShowRegisterModal(true)}
           className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:scale-105 transition-transform shadow-lg"
         >
-          立即登记
+          {t('立即登记', 'Register now')}
         </button>
       </div>
 
@@ -161,8 +174,8 @@ export const MerchCenter: React.FC = () => {
             </button>
             
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-gray-950">周边购买登记</h2>
-              <p className="text-gray-400 font-bold text-sm">将您的热爱转化为支持的力量</p>
+              <h2 className="text-3xl font-black text-gray-950">{t('周边购买登记', 'Merch Purchase Log')}</h2>
+              <p className="text-gray-400 font-bold text-sm">{t('将您的热爱转化为支持的力量', 'Turn your love into support')}</p>
             </div>
 
             {showSuccess ? (
@@ -171,8 +184,8 @@ export const MerchCenter: React.FC = () => {
                   <CheckCircle size={48} />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-2xl font-black text-gray-900">登记成功！</h3>
-                  <p className="text-green-600 font-bold mt-2">预计获得积分: +{formData.quantity * 10}</p>
+                  <h3 className="text-2xl font-black text-gray-900">{t('登记成功！', 'Registered!')}</h3>
+                  <p className="text-green-600 font-bold mt-2">{t('预计获得积分: +', 'Estimated points: +')}{formData.quantity * 10}</p>
                 </div>
               </div>
             ) : (
@@ -183,13 +196,13 @@ export const MerchCenter: React.FC = () => {
                     onClick={() => setViewHistory(false)}
                     className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${!viewHistory ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                   >
-                    <ClipboardList size={16} /> 提交登记
+                    <ClipboardList size={16} /> {t('提交登记', 'Submit')}
                   </button>
-                  <button 
+                  <button
                     onClick={() => setViewHistory(true)}
                     className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${viewHistory ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                   >
-                    <History size={16} /> 我的记录
+                    <History size={16} /> {t('我的记录', 'My records')}
                   </button>
                 </div>
 
@@ -197,22 +210,22 @@ export const MerchCenter: React.FC = () => {
                   <form onSubmit={handleRegisterSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">周边类型</label>
-                        <select 
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{t('周边类型', 'Merch type')}</label>
+                        <select
                           required
                           value={formData.type}
                           onChange={(e) => setFormData({...formData, type: e.target.value})}
                           className="w-full p-4 rounded-xl bg-gray-50 border-none outline-none focus:ring-4 focus:ring-green-100 font-bold text-sm appearance-none"
                         >
-                          <option value="">请选择周边</option>
-                          <option value="棉花娃娃">棉花娃娃</option>
-                          <option value="亚克力摆件">亚克力摆件</option>
-                          <option value="纸类周边">纸类周边</option>
-                          <option value="穿戴周边">穿戴周边</option>
+                          <option value="">{t('请选择周边', 'Select merch')}</option>
+                          <option value="棉花娃娃">{t('棉花娃娃', 'Plushies')}</option>
+                          <option value="亚克力摆件">{t('亚克力摆件', 'Acrylic stand')}</option>
+                          <option value="纸类周边">{t('纸类周边', 'Paper goods')}</option>
+                          <option value="穿戴周边">{t('穿戴周边', 'Wearables')}</option>
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">购买数量</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{t('购买数量', 'Quantity')}</label>
                         <input 
                           type="number" 
                           min="1"
@@ -225,11 +238,11 @@ export const MerchCenter: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">联系人姓名</label>
-                      <input 
-                        type="text" 
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{t('联系人姓名', 'Contact name')}</label>
+                      <input
+                        type="text"
                         required
-                        placeholder="请输入真实姓名"
+                        placeholder={t('请输入真实姓名', 'Enter your real name')}
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                         className="w-full p-4 rounded-xl bg-gray-50 border-none outline-none focus:ring-4 focus:ring-green-100 font-bold text-sm"
@@ -237,11 +250,11 @@ export const MerchCenter: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">联系电话</label>
-                      <input 
-                        type="tel" 
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{t('联系电话', 'Phone')}</label>
+                      <input
+                        type="tel"
                         required
-                        placeholder="请输入您的手机号"
+                        placeholder={t('请输入您的手机号', 'Enter your phone number')}
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         className="w-full p-4 rounded-xl bg-gray-50 border-none outline-none focus:ring-4 focus:ring-green-100 font-bold text-sm"
@@ -251,8 +264,8 @@ export const MerchCenter: React.FC = () => {
                     <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
                       <Info size={18} className="text-blue-500 mt-0.5" />
                       <div>
-                        <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest mb-1">积分计算规则</p>
-                        <p className="text-[10px] text-blue-700 font-medium">每购买 1 件周边 = 10 积分。本次登记预计可得 <span className="font-black text-blue-950 underline">{formData.quantity * 10} 积分</span>。</p>
+                        <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest mb-1">{t('积分计算规则', 'Point rules')}</p>
+                        <p className="text-[10px] text-blue-700 font-medium">{t('每购买 1 件周边 = 10 积分。本次登记预计可得 ', 'Each item = 10 points. This entry earns about ')}<span className="font-black text-blue-950 underline">{formData.quantity * 10} {t('积分', 'points')}</span>。</p>
                       </div>
                     </div>
 
@@ -260,7 +273,7 @@ export const MerchCenter: React.FC = () => {
                       type="submit" 
                       className="w-full py-5 gradient-redsea text-white font-black text-xl rounded-2xl shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                     >
-                      <CheckCircle size={20} /> 提交登记
+                      <CheckCircle size={20} /> {t('提交登记', 'Submit')}
                     </button>
                   </form>
                 ) : (
@@ -268,28 +281,28 @@ export const MerchCenter: React.FC = () => {
                     {/* Mock History Records */}
                     <div className="p-5 border-2 border-dashed border-gray-100 rounded-2xl flex justify-between items-center group hover:border-green-200 transition-colors">
                       <div>
-                        <h4 className="font-black text-gray-800 text-sm">购买棉花娃娃 × 2</h4>
+                        <h4 className="font-black text-gray-800 text-sm">{t('购买棉花娃娃 × 2', 'Bought plushies × 2')}</h4>
                         <p className="text-[10px] text-gray-400 font-bold">2026-02-04 14:20</p>
                       </div>
                       <div className="text-lg font-black text-green-600">+20</div>
                     </div>
                     <div className="p-5 border-2 border-dashed border-gray-100 rounded-2xl flex justify-between items-center bg-gray-50/50 opacity-70">
                       <div>
-                        <h4 className="font-black text-gray-800 text-sm">参与应援活动消耗</h4>
+                        <h4 className="font-black text-gray-800 text-sm">{t('参与应援活动消耗', 'Spent on support event')}</h4>
                         <p className="text-[10px] text-gray-400 font-bold">2026-02-03 09:15</p>
                       </div>
                       <div className="text-lg font-black text-red-400">-15</div>
                     </div>
                     <div className="p-5 border-2 border-dashed border-gray-100 rounded-2xl flex justify-between items-center group hover:border-green-200 transition-colors">
                       <div>
-                        <h4 className="font-black text-gray-800 text-sm">购买亚克力摆件 × 1</h4>
+                        <h4 className="font-black text-gray-800 text-sm">{t('购买亚克力摆件 × 1', 'Bought acrylic stand × 1')}</h4>
                         <p className="text-[10px] text-gray-400 font-bold">2026-02-01 18:40</p>
                       </div>
                       <div className="text-lg font-black text-green-600">+10</div>
                     </div>
 
                     <div className="pt-6 mt-6 border-t border-gray-100 flex items-center justify-between px-2">
-                      <span className="text-xs font-black text-gray-400 italic">当前可用积分余额</span>
+                      <span className="text-xs font-black text-gray-400 italic">{t('当前可用积分余额', 'Available points')}</span>
                       <span className="text-3xl font-black text-green-700">15</span>
                     </div>
                   </div>

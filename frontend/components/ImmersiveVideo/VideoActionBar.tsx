@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check, Heart, MessageCircle, Plus, Share2 } from 'lucide-react';
 import type { FeedPost } from '../../services/feedService';
 import { getFollowStatus, toggleFollow } from '../../services/followService';
 import { useCurrentUser } from '../../contexts/UserContext';
+import { useLang } from '../../contexts/LanguageContext';
+import { showInfo } from '../../utils/toast';
 
 interface VideoActionBarProps {
   post: FeedPost;
@@ -20,6 +23,8 @@ export const VideoActionBar: React.FC<VideoActionBarProps> = ({
   onShareClick,
 }) => {
   const { user, isLoggedIn } = useCurrentUser();
+  const { t } = useLang();
+  const navigate = useNavigate();
   const authorId = post.author?.id;
   const isOwnVideo = !!authorId && authorId === user?.id;
 
@@ -49,15 +54,20 @@ export const VideoActionBar: React.FC<VideoActionBarProps> = ({
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isLoggedIn) {
+      showInfo(t('请先登录', 'Please log in first'));
+      navigate('/login');
+      return;
+    }
     if (!authorId || followBusy) return;
     setFollowBusy(true);
     try {
       const r = await toggleFollow(authorId);
       setFollowing(r.following);
       if (r.following) {
-        // 绿色对勾闪一下再消失
+        // 绿色对勾闪一下，2 秒后淡出消失
         setJustFollowed(true);
-        setTimeout(() => setJustFollowed(false), 1000);
+        setTimeout(() => setJustFollowed(false), 2000);
       }
     } catch {
       /* ignore */
@@ -76,8 +86,8 @@ export const VideoActionBar: React.FC<VideoActionBarProps> = ({
   const circle =
     'w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm flex items-center justify-center transition-colors';
   const iconCls = 'w-5 h-5 md:w-6 md:h-6';
-  // 未关注且非自己视频时显示 +
-  const showFollowPlus = isLoggedIn && !isOwnVideo && !following && !!authorId;
+  // 未关注且非自己视频时显示 +（未登录也显示，点击引导登录）
+  const showFollowPlus = !isOwnVideo && !following && !!authorId;
 
   return (
     <div
@@ -92,9 +102,7 @@ export const VideoActionBar: React.FC<VideoActionBarProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            // 作者主页占位
-            // eslint-disable-next-line no-console
-            console.log('打开作者主页:', authorId);
+            if (authorId) navigate(`/users/${authorId}`);
           }}
           className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-white overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shadow-lg"
         >
@@ -109,15 +117,15 @@ export const VideoActionBar: React.FC<VideoActionBarProps> = ({
           <button
             onClick={handleFollow}
             disabled={followBusy}
-            aria-label="关注作者"
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-yellow-400 text-green-900 flex items-center justify-center shadow-md hover:scale-110 transition-transform disabled:opacity-60"
+            aria-label={t('关注作者', 'Follow author')}
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-yellow-400 text-green-900 flex items-center justify-center shadow-md ring-2 ring-black/20 hover:scale-110 transition-transform disabled:opacity-60"
           >
-            <Plus size={15} strokeWidth={3} />
+            <Plus size={13} strokeWidth={3} />
           </button>
         )}
         {justFollowed && (
-          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md animate-likePop">
-            <Check size={15} strokeWidth={3} />
+          <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center shadow-md ring-2 ring-black/20 animate-likePop">
+            <Check size={13} strokeWidth={3} />
           </span>
         )}
       </div>
@@ -165,7 +173,7 @@ export const VideoActionBar: React.FC<VideoActionBarProps> = ({
           <Share2 className={iconCls} />
         </span>
         <span className="text-xs font-bold" style={textShadow}>
-          分享
+          {t('分享', 'Share')}
         </span>
       </button>
     </div>

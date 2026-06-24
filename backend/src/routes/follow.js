@@ -117,9 +117,10 @@ router.get('/:userId/status', requireAuth, async (req, res, next) => {
     ]);
 
     const following = Boolean(meToThem);
-    const isMutual = following && Boolean(themToMe);
+    const followsMe = Boolean(themToMe);
+    const isMutual = following && followsMe;
 
-    res.json({ following, isMutual });
+    res.json({ following, followsMe, isMutual });
   } catch (error) {
     next(error);
   }

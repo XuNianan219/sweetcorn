@@ -7,6 +7,7 @@ import {
   toggleLike,
 } from '../services/feedService';
 import { getCategoryName } from '../constants/categories';
+import { useLang } from '../contexts/LanguageContext';
 import { PostCard } from './PostCard';
 import { WeeklyLikeList } from './WeeklyLikeList';
 import { WeeklyLikeCards } from './WeeklyLikeCards';
@@ -37,8 +38,9 @@ export const CategorySection: React.FC<CategorySectionProps> = ({ category }) =>
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const requestIdRef = useRef(0);
+  const { t, lang } = useLang();
 
-  const categoryName = getCategoryName(category);
+  const categoryName = getCategoryName(category, lang);
 
   // 本周 Like 仅在 mount / category 切换时拉取
   useEffect(() => {
@@ -162,7 +164,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({ category }) =>
       {topPosts.length > 0 ? WeeklyLike : null}
 
       <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-        <div className="text-base md:text-lg font-bold text-gray-800">全部帖子</div>
+        <div className="text-base md:text-lg font-bold text-gray-800">{t('全部帖子', 'All posts')}</div>
         <div className="flex items-center gap-1 bg-gray-50 rounded-full p-1">
           <button
             type="button"
@@ -171,7 +173,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({ category }) =>
               sort === 'latest' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
-            最新
+            {t('最新', 'Latest')}
           </button>
           <button
             type="button"
@@ -180,7 +182,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({ category }) =>
               sort === 'hot' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
-            最热
+            {t('最热', 'Hot')}
           </button>
         </div>
       </div>
@@ -195,7 +197,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({ category }) =>
         <PostFeedSkeleton count={8} />
       ) : posts.length === 0 ? (
         <div className="text-center py-20 text-gray-400 font-medium">
-          {categoryName}还没有帖子，快来发第一个吧
+          {t(`${categoryName}还没有帖子，快来发第一个吧`, `No posts in ${categoryName} yet — be the first!`)}
         </div>
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-4">

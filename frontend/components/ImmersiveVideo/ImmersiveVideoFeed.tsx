@@ -8,6 +8,7 @@ import { VideoOverlay } from './VideoOverlay';
 import { VideoActionBar } from './VideoActionBar';
 import { CommentDrawer } from './CommentDrawer';
 import { ShareMenu } from './ShareMenu';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface ImmersiveVideoFeedProps {
   onExit: () => void;
@@ -17,6 +18,7 @@ const PAGE_SIZE = 10;
 const MUTE_KEY = 'sweetcorn_video_muted';
 
 export const ImmersiveVideoFeed: React.FC<ImmersiveVideoFeedProps> = ({ onExit }) => {
+  const { t } = useLang();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [page, setPage] = useState(1);
@@ -70,7 +72,7 @@ export const ImmersiveVideoFeed: React.FC<ImmersiveVideoFeedProps> = ({ onExit }
         setHasMore(res.hasMore);
         setPage(1);
       })
-      .catch((e) => !cancelled && setError(e?.message || '加载失败'))
+      .catch((e) => !cancelled && setError(e?.message || t('加载失败', 'Failed to load')))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -226,8 +228,8 @@ export const ImmersiveVideoFeed: React.FC<ImmersiveVideoFeedProps> = ({ onExit }
           top: 'calc(1rem + env(safe-area-inset-top))',
           left: 'calc(1rem + env(safe-area-inset-left))',
         }}
-        className="absolute z-30 w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/25 transition-colors"
-        title="返回瀑布流"
+        className="absolute z-30 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/55 transition-colors"
+        title={t('返回瀑布流', 'Back to grid')}
       >
         <ArrowLeft size={22} />
       </button>
@@ -240,14 +242,14 @@ export const ImmersiveVideoFeed: React.FC<ImmersiveVideoFeedProps> = ({ onExit }
         <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-white/80 px-6 text-center">
           <p className="font-medium">{error}</p>
           <button onClick={onExit} className="px-5 py-2.5 bg-white/20 rounded-2xl font-bold">
-            返回
+            {t('返回', 'Back')}
           </button>
         </div>
       ) : posts.length === 0 ? (
         <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-white/80 px-6 text-center">
-          <p className="font-medium">嗑学影像还没有视频，去发一条带视频的帖子吧</p>
+          <p className="font-medium">{t('嗑学影像还没有视频，去发一条带视频的帖子吧', 'No videos yet — post one with a video')}</p>
           <button onClick={onExit} className="px-5 py-2.5 bg-white/20 rounded-2xl font-bold">
-            返回
+            {t('返回', 'Back')}
           </button>
         </div>
       ) : (

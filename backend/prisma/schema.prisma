@@ -13,6 +13,7 @@ model User {
   wechatOpenid String?  @unique @map("wechat_openid")
   nickname     String?
   avatarUrl    String?  @map("avatar_url")
+  bio          String   @default("")
   password     String?  @map("password_hash")
   role         String   @default("user")
   status       String   @default("active")
@@ -28,8 +29,29 @@ model User {
   commentLikes    CommentLike[]
   notifications          Notification[] @relation("UserNotifications")
   triggeredNotifications Notification[] @relation("ActorNotifications")
+  sentMessages           Message[] @relation("SentMessages")
+  receivedMessages       Message[] @relation("ReceivedMessages")
+  products               Product[] @relation("UserProducts")
 
   @@map("users")
+}
+
+model Message {
+  id         String   @id @default(uuid()) @db.Uuid
+  senderId   String   @map("sender_id") @db.Uuid
+  receiverId String   @map("receiver_id") @db.Uuid
+  content    String
+  kind       String   @default("social")
+  msgType    String   @default("text") @map("msg_type")
+  imageUrl   String?  @map("image_url")
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+  @@map("messages")
 }
 
 model Event {
@@ -60,11 +82,17 @@ model Product {
   id          String   @id @default(uuid()) @db.Uuid
   name        String
   description String   @default("")
+  nameEn        String? @map("name_en")
+  descriptionEn String? @map("description_en")
   price       Float    @default(0)
   imageUrls   String[] @default([]) @map("image_urls")
+  videoUrl    String   @default("") @map("video_url")
   wantCount   Int      @default(0) @map("want_count")
+  sellerId    String?  @map("seller_id") @db.Uuid
+  seller      User?    @relation("UserProducts", fields: [sellerId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  @@index([sellerId])
   @@map("products")
 }
 
@@ -73,15 +101,21 @@ model Idea {
   authorId      String     @map("author_id") @db.Uuid
   name          String
   description   String     @default("")
+  nameEn        String?    @map("name_en")
+  descriptionEn String?    @map("description_en")
   designImages  String[]   @default([]) @map("design_images")
   estimatedCost Float      @default(0) @map("estimated_cost")
   targetPeople  Int        @default(50) @map("target_people")
   wantCount     Int        @default(0) @map("want_count")
+  status        String     @default("pending")
+  reviewedBy    String?    @map("reviewed_by") @db.Uuid
+  rejectReason  String?    @map("reject_reason")
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   author        User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   wants         IdeaWant[]
 
   @@index([authorId])
+  @@index([status])
   @@map("ideas")
 }
 
@@ -103,6 +137,8 @@ model Post {
   id        String   @id @default(uuid()) @db.Uuid
   title     String
   content   String
+  titleEn   String?  @map("title_en")
+  contentEn String?  @map("content_en")
   authorId  String   @map("user_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -211,6 +247,8 @@ model TimelineEntry {
   title       String
   summary     String   @default("")
   content     String   @default("")
+  titleEn     String?  @map("title_en")
+  contentEn   String?  @map("content_en")
   image       String   @default("")
   orderNum    Int      @default(0) @map("order_num")
   isPublished Boolean  @default(true) @map("is_published")
@@ -219,6 +257,51 @@ model TimelineEntry {
 
   @@index([isPublished, orderNum])
   @@map("timeline_entries")
+}
+
+// 旅游模块·官方文化体验卡片（仅超级管理员维护，普通用户只读）
+model TravelExperience {
+  id          String   @id @default(uuid()) @db.Uuid
+  celebrity   String   @default("")
+  title       String
+  category    String   @default("")
+  location    String   @default("")
+  duration    String   @default("")
+  description String   @default("")
+  titleEn       String? @map("title_en")
+  categoryEn    String? @map("category_en")
+  locationEn    String? @map("location_en")
+  descriptionEn String? @map("description_en")
+  coverImage  String   @default("") @map("cover_image")
+  vlogUrl     String   @default("") @map("vlog_url")
+  detailUrl   String   @default("") @map("detail_url")
+  orderNum    Int      @default(0) @map("order_num")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isPublished, orderNum])
+  @@map("travel_experiences")
+}
+
+// 旅游模块·官方精选线路 Banner（仅超级管理员维护，普通用户只读）
+model TravelRoute {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  subtitle    String   @default("")
+  description String   @default("")
+  titleEn       String? @map("title_en")
+  subtitleEn    String? @map("subtitle_en")
+  descriptionEn String? @map("description_en")
+  coverImage  String   @default("") @map("cover_image")
+  detailUrl   String   @default("") @map("detail_url")
+  orderNum    Int      @default(0) @map("order_num")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isPublished, orderNum])
+  @@map("travel_routes")
 }
 
 model Follow {

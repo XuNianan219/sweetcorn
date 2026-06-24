@@ -11,13 +11,23 @@ function authHeaders(): Record<string, string> {
 
 // ─── Types ───────────────────────────────────────────────────
 
+export interface ProductSeller {
+  id: string;
+  nickname: string | null;
+  avatarUrl: string | null;
+  bio: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
   imageUrls: string[];
+  videoUrl?: string;
   wantCount: number;
+  sellerId?: string | null;
+  seller?: ProductSeller | null;
   createdAt: string;
 }
 
@@ -36,8 +46,10 @@ export interface Idea {
   estimatedCost: number;
   targetPeople: number;
   wantCount: number;
+  status?: 'pending' | 'approved' | 'rejected';
+  rejectReason?: string | null;
   createdAt: string;
-  author: IdeaAuthor;
+  author: IdeaAuthor & { phone?: string | null };
   isWantedByMe: boolean;
 }
 
@@ -58,6 +70,32 @@ export interface SubmitIdeaData {
 }
 
 // ─── API calls ───────────────────────────────────────────────
+
+export interface SubmitProductData {
+  name: string;
+  description: string;
+  price: number;
+  imageUrls: string[];
+  videoUrl?: string;
+}
+
+export async function submitProduct(data: SubmitProductData): Promise<Product> {
+  const token = getToken();
+  const res = await fetch(`${getApiBase()}/api/merchandise/products`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: '上传失败' }));
+    throw new Error((err as { message?: string }).message || '上传失败');
+  }
+  const result = await res.json();
+  return result.product as Product;
+}
 
 export async function getProducts(): Promise<Product[]> {
   const res = await fetch(`${getApiBase()}/api/merchandise/products`, {
@@ -110,6 +148,51 @@ export async function submitIdea(data: SubmitIdeaData): Promise<Idea> {
   }
   const result = await res.json();
   return result.idea as Idea;
+}
+
+// 我提交的创意（含待审核/被拒）
+export async function getMyIdeas(): Promise<Idea[]> {
+  const res = await fetch(`${getApiBase()}/api/merchandise/ideas/mine`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error('获取我的创意失败');
+  const data = await res.json();
+  return data.ideas as Idea[];
+}
+
+// ─── 管理员：创意审核 ─────────────────────────────────────────
+export async function getPendingIdeas(): Promise<Idea[]> {
+  const res = await fetch(`${getApiBase()}/api/merchandise/ideas/admin/pending`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error('获取待审核创意失败');
+  const data = await res.json();
+  return data.ideas as Idea[];
+}
+
+export async function approveIdea(id: string): Promise<Idea> {
+  const res = await fetch(`${getApiBase()}/api/merchandise/ideas/${id}/approve`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: '操作失败' }));
+    throw new Error((err as { message?: string }).message || '操作失败');
+  }
+  return (await res.json()).idea as Idea;
+}
+
+export async function rejectIdea(id: string, rejectReason: string): Promise<Idea> {
+  const res = await fetch(`${getApiBase()}/api/merchandise/ideas/${id}/reject`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ rejectReason }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: '操作失败' }));
+    throw new Error((err as { message?: string }).message || '操作失败');
+  }
+  return (await res.json()).idea as Idea;
 }
 
 export async function toggleWantIdea(

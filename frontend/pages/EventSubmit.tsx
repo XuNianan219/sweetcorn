@@ -4,17 +4,22 @@ import { AlertCircle, ImagePlus, Loader2, Send, X } from 'lucide-react';
 import { submitEvent, type EventType } from '../services/eventsService';
 import { uploadMedia } from '../services/mediaService';
 import PageHeader from '../components/PageHeader';
+import { useLang } from '../contexts/LanguageContext';
 
-const TYPE_OPTIONS: { value: EventType; label: string }[] = [
-  { value: 'performance', label: '演出行程' },
-  { value: 'merchandise', label: '周边发售' },
-  { value: 'endorsement', label: '代言公益' },
+const TYPE_OPTIONS: { value: EventType; label: string; labelEn: string }[] = [
+  { value: 'performance', label: '演出行程', labelEn: 'Show schedule' },
+  { value: 'merchandise', label: '周边发售', labelEn: 'Merch drop' },
+  { value: 'endorsement', label: '代言公益', labelEn: 'Deal / charity' },
 ];
 
-const CELEBS = ['梓渝', '田栩宁'];
+const CELEBS: { value: string; labelEn: string }[] = [
+  { value: '梓渝', labelEn: 'Ziyu' },
+  { value: '田栩宁', labelEn: 'Tianxuning' },
+];
 
 export const EventSubmit: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
 
   const [title, setTitle] = useState('');
   const [eventType, setEventType] = useState<EventType>('performance');
@@ -47,7 +52,7 @@ export const EventSubmit: React.FC = () => {
       const r = await uploadMedia(file);
       setCoverImage(r.url);
     } catch (err: any) {
-      setError(err?.message || '封面上传失败');
+      setError(err?.message || t('封面上传失败', 'Cover upload failed'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -58,9 +63,9 @@ export const EventSubmit: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (!title.trim()) return setError('请填写活动标题');
-    if (!startAt) return setError('请选择开始时间');
-    if (isPerformance && !location.trim()) return setError('演出类活动必须填写地点');
+    if (!title.trim()) return setError(t('请填写活动标题', 'Please enter an event title'));
+    if (!startAt) return setError(t('请选择开始时间', 'Please choose a start time'));
+    if (isPerformance && !location.trim()) return setError(t('演出类活动必须填写地点', 'Shows require a location'));
 
     setSubmitting(true);
     try {
@@ -75,10 +80,10 @@ export const EventSubmit: React.FC = () => {
         externalUrl: externalUrl.trim(),
         celebrities,
       });
-      setToast('已提交，等待管理员审核');
+      setToast(t('已提交，等待管理员审核', 'Submitted — awaiting admin review'));
       setTimeout(() => navigate('/profile'), 1200);
     } catch (err: any) {
-      setError(err?.message || '提交失败');
+      setError(err?.message || t('提交失败', 'Submission failed'));
       setSubmitting(false);
     }
   };
@@ -98,8 +103,8 @@ export const EventSubmit: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-[2rem] border border-green-50 shadow-sm p-6 md:p-8 space-y-5">
         <div>
-          <h1 className="text-2xl font-black text-green-950">提交活动</h1>
-          <p className="text-sm text-gray-400 font-medium mt-1">提交后需管理员审核才会公开展示</p>
+          <h1 className="text-2xl font-black text-green-950">{t('提交活动', 'Submit Event')}</h1>
+          <p className="text-sm text-gray-400 font-medium mt-1">{t('提交后需管理员审核才会公开展示', 'Needs admin review before going public')}</p>
         </div>
 
         {error && (
@@ -110,36 +115,36 @@ export const EventSubmit: React.FC = () => {
         )}
 
         {/* 标题 */}
-        <Field label="活动标题" required>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例：梓渝巡回演唱会·北京站" className={inputCls} />
+        <Field label={t('活动标题', 'Event title')} required>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('例：梓渝巡回演唱会·北京站', 'e.g. Ziyu Tour · Beijing')} className={inputCls} />
         </Field>
 
         {/* 类型 */}
-        <Field label="活动类型" required>
+        <Field label={t('活动类型', 'Event type')} required>
           <select value={eventType} onChange={(e) => setEventType(e.target.value as EventType)} className={inputCls}>
             {TYPE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {t(o.label, o.labelEn)}
               </option>
             ))}
           </select>
         </Field>
 
         {/* 明星 */}
-        <Field label="涉及明星">
+        <Field label={t('涉及明星', 'Featured stars')}>
           <div className="flex gap-2">
             {CELEBS.map((c) => {
-              const on = celebrities.includes(c);
+              const on = celebrities.includes(c.value);
               return (
                 <button
-                  key={c}
+                  key={c.value}
                   type="button"
-                  onClick={() => toggleCeleb(c)}
+                  onClick={() => toggleCeleb(c.value)}
                   className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                     on ? 'gradient-ningyuzhi text-green-950' : 'bg-gray-50 text-gray-500 hover:text-green-600'
                   }`}
                 >
-                  {c}
+                  {t(c.value, c.labelEn)}
                 </button>
               );
             })}
@@ -147,21 +152,21 @@ export const EventSubmit: React.FC = () => {
         </Field>
 
         {/* 描述 */}
-        <Field label="详细描述">
+        <Field label={t('详细描述', 'Description')}>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="活动详情、注意事项等"
+            placeholder={t('活动详情、注意事项等', 'Event details, notes, etc.')}
             className={`${inputCls} h-28 resize-none`}
           />
         </Field>
 
         {/* 封面 */}
-        <Field label="封面图">
+        <Field label={t('封面图', 'Cover image')}>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
           {coverImage ? (
             <div className="relative w-40">
-              <img src={coverImage} alt="封面" className="w-40 h-28 object-cover rounded-xl border border-gray-100" />
+              <img src={coverImage} alt={t('封面', 'Cover')} className="w-40 h-28 object-cover rounded-xl border border-gray-100" />
               <button
                 type="button"
                 onClick={() => setCoverImage('')}
@@ -178,33 +183,33 @@ export const EventSubmit: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2.5 text-green-700 bg-green-50 hover:bg-green-100 rounded-xl font-bold text-sm transition-colors disabled:opacity-50"
             >
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
-              {uploading ? '上传中…' : '上传封面'}
+              {uploading ? t('上传中…', 'Uploading…') : t('上传封面', 'Upload cover')}
             </button>
           )}
         </Field>
 
         {/* 地点 */}
-        <Field label="地点" required={isPerformance}>
+        <Field label={t('地点', 'Location')} required={isPerformance}>
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder={isPerformance ? '演出类必填，如：北京·国家体育馆' : '可选'}
+            placeholder={isPerformance ? t('演出类必填，如：北京·国家体育馆', 'Required for shows, e.g. Beijing · National Stadium') : t('可选', 'Optional')}
             className={inputCls}
           />
         </Field>
 
         {/* 时间 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="开始时间" required>
+          <Field label={t('开始时间', 'Start time')} required>
             <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className={inputCls} />
           </Field>
-          <Field label="结束时间（可选）">
+          <Field label={t('结束时间（可选）', 'End time (optional)')}>
             <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className={inputCls} />
           </Field>
         </div>
 
         {/* 链接 */}
-        <Field label="购买/购票链接（可选）">
+        <Field label={t('购买/购票链接（可选）', 'Buy/ticket link (optional)')}>
           <input value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} placeholder="https://..." className={inputCls} />
         </Field>
 
@@ -214,7 +219,7 @@ export const EventSubmit: React.FC = () => {
           className="w-full py-3.5 gradient-ningyuzhi text-green-950 font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.01] transition-transform disabled:opacity-50"
         >
           {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-          提交审核
+          {t('提交审核', 'Submit for review')}
         </button>
       </form>
     </div>

@@ -4,12 +4,14 @@ import {
   EVENT_TYPE_META,
   countdownText,
 } from '../../services/eventsService';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface CountdownItemProps {
   event: EventItem;
 }
 
 export const CountdownItem: React.FC<CountdownItemProps> = ({ event }) => {
+  const { lang } = useLang();
   const meta = EVENT_TYPE_META[event.eventType];
 
   return (
@@ -19,7 +21,7 @@ export const CountdownItem: React.FC<CountdownItemProps> = ({ event }) => {
       </div>
       <div className="min-w-0">
         <p className="font-black text-gray-800 text-sm truncate">{event.title}</p>
-        <p className="text-xs font-bold text-green-600">{countdownText(event.startAt)}</p>
+        <p className="text-xs font-bold text-green-600">{countdownText(event.startAt, lang)}</p>
       </div>
     </div>
   );

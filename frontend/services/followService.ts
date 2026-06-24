@@ -12,7 +12,9 @@ export async function toggleFollow(userId: string): Promise<{ following: boolean
 }
 
 // 查询关注状态
-export async function getFollowStatus(userId: string): Promise<{ following: boolean; isMutual: boolean }> {
+export async function getFollowStatus(
+  userId: string,
+): Promise<{ following: boolean; followsMe: boolean; isMutual: boolean }> {
   return apiFetch(`${BASE_URL}/follows/${userId}/status`);
 }
 

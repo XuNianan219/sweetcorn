@@ -28,12 +28,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (!this.state.hasError) return this.props.children;
 
     const isDev = import.meta.env?.DEV;
+    // 类组件无法用 hook，直接读 localStorage 判断语言
+    const en = (typeof localStorage !== 'undefined' && localStorage.getItem('sweetcorn_lang') === 'en');
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcf9e8] px-6 text-center">
         <div className="text-6xl mb-4">😢</div>
-        <h1 className="text-2xl font-black text-green-950">哎呀，出了点小问题</h1>
-        <p className="mt-2 text-sm font-medium text-gray-500">我们已经记录了这个问题</p>
+        <h1 className="text-2xl font-black text-green-950">{en ? 'Oops, something went wrong' : '哎呀，出了点小问题'}</h1>
+        <p className="mt-2 text-sm font-medium text-gray-500">{en ? 'We’ve logged the issue' : '我们已经记录了这个问题'}</p>
 
         {isDev && this.state.error && (
           <pre className="mt-4 max-w-xl overflow-auto rounded-xl bg-red-50 p-4 text-left text-xs text-red-500">
@@ -46,7 +48,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             onClick={() => window.location.reload()}
             className="px-6 py-3 gradient-ningyuzhi text-green-950 font-black rounded-2xl hover:scale-[1.03] transition-transform"
           >
-            刷新页面
+            {en ? 'Reload' : '刷新页面'}
           </button>
           <button
             onClick={() => {
@@ -55,7 +57,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             }}
             className="px-6 py-3 bg-white border-2 border-green-200 text-green-700 font-black rounded-2xl hover:bg-green-50 transition-colors"
           >
-            返回首页
+            {en ? 'Back home' : '返回首页'}
           </button>
         </div>
       </div>

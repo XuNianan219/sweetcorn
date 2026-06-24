@@ -12,6 +12,7 @@
     "seed:test": "node scripts/seedTestPosts.js",
     "seed:merchandise": "node scripts/seedMerchandise.js",
     "seed:celebrity-pages": "node scripts/seedCelebrityPages.js",
+    "seed:timeline-mock": "node scripts/seedTimelineFromMock.js",
     "create:admin": "node scripts/createSuperAdmin.js",
     "create:test-users": "node scripts/createTestUsers.js",
     "seed:events": "node scripts/seedEvents.js",

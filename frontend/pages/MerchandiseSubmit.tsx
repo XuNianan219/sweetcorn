@@ -4,9 +4,11 @@ import { Upload, X } from 'lucide-react';
 import { uploadMedia } from '../services/mediaService';
 import { submitIdea } from '../services/merchandiseService';
 import PageHeader from '../components/PageHeader';
+import { useLang } from '../contexts/LanguageContext';
 
 export const MerchandiseSubmit: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
@@ -23,7 +25,7 @@ export const MerchandiseSubmit: React.FC = () => {
     const files = Array.from(e.target.files ?? []) as File[];
     if (!files.length) return;
     if (designImages.length + files.length > 5) {
-      setError('最多上传 5 张图片');
+      setError(t('最多上传 5 张图片', 'Upload up to 5 images'));
       return;
     }
     setUploading(true);
@@ -32,7 +34,7 @@ export const MerchandiseSubmit: React.FC = () => {
       const uploaded = await Promise.all(files.map((f) => uploadMedia(f)));
       setDesignImages((prev) => [...prev, ...uploaded.map((u) => u.url)]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '上传失败');
+      setError(err instanceof Error ? err.message : t('上传失败', 'Upload failed'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -45,9 +47,9 @@ export const MerchandiseSubmit: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) { setError('请填写创意名称'); return; }
-    if (!description.trim()) { setError('请填写设计描述'); return; }
-    if (Number(targetPeople) < 10) { setError('目标成团人数至少 10 人'); return; }
+    if (!name.trim()) { setError(t('请填写创意名称', 'Please enter an idea name')); return; }
+    if (!description.trim()) { setError(t('请填写设计描述', 'Please enter a design description')); return; }
+    if (Number(targetPeople) < 10) { setError(t('目标成团人数至少 10 人', 'Group goal must be at least 10 people')); return; }
 
     setSubmitting(true);
     setError(null);
@@ -62,7 +64,7 @@ export const MerchandiseSubmit: React.FC = () => {
       setSuccess(true);
       setTimeout(() => navigate('/category/merchandise'), 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '提交失败，请重试');
+      setError(err instanceof Error ? err.message : t('提交失败，请重试', 'Submission failed, please retry'));
     } finally {
       setSubmitting(false);
     }
@@ -72,13 +74,13 @@ export const MerchandiseSubmit: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
       <PageHeader />
       <div>
-        <h1 className="text-2xl font-black text-gray-900">提交我的创意</h1>
-        <p className="text-sm text-gray-400 mt-1">你的设计可能成为下一个爆款周边</p>
+        <h1 className="text-2xl font-black text-gray-900">{t('提交我的创意', 'Submit My Idea')}</h1>
+        <p className="text-sm text-gray-400 mt-1">{t('你的设计可能成为下一个爆款周边', 'Your design could be the next hit merch')}</p>
       </div>
 
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 font-medium text-sm">
-          🎉 创意提交成功，等待粉丝凑团！正在返回...
+          {t('🎉 创意已提交，等待管理员审核通过后将上架众筹！正在返回...', '🎉 Idea submitted — it will go live for crowdfunding once an admin approves it! Returning...')}
         </div>
       )}
 
@@ -92,13 +94,13 @@ export const MerchandiseSubmit: React.FC = () => {
         {/* 创意名称 */}
         <div className="space-y-1.5">
           <label className="text-xs font-black text-gray-400 uppercase tracking-wider">
-            创意名称 *
+            {t('创意名称 *', 'Idea name *')}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="例如：梓渝玩偶定制"
+            placeholder={t('例如：梓渝玩偶定制', 'e.g. Custom Ziyu plushie')}
             className="w-full px-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-4 focus:ring-green-100 font-medium text-sm"
             required
           />
@@ -107,7 +109,7 @@ export const MerchandiseSubmit: React.FC = () => {
         {/* 设计图上传 */}
         <div className="space-y-1.5">
           <label className="text-xs font-black text-gray-400 uppercase tracking-wider">
-            设计图（最多 5 张）
+            {t('设计图（最多 5 张）', 'Design images (max 5)')}
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
             {designImages.map((url, idx) => (
@@ -130,11 +132,11 @@ export const MerchandiseSubmit: React.FC = () => {
                 className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-green-300 hover:text-green-500 transition-colors disabled:opacity-50"
               >
                 {uploading ? (
-                  <span className="text-xs">上传中...</span>
+                  <span className="text-xs">{t('上传中...', 'Uploading...')}</span>
                 ) : (
                   <>
                     <Upload size={18} />
-                    <span className="text-xs">添加图片</span>
+                    <span className="text-xs">{t('添加图片', 'Add image')}</span>
                   </>
                 )}
               </button>
@@ -153,12 +155,12 @@ export const MerchandiseSubmit: React.FC = () => {
         {/* 设计描述 */}
         <div className="space-y-1.5">
           <label className="text-xs font-black text-gray-400 uppercase tracking-wider">
-            设计描述 *
+            {t('设计描述 *', 'Design description *')}
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="详细描述你的创意设计，材质、尺寸、风格等..."
+            placeholder={t('详细描述你的创意设计，材质、尺寸、风格等...', 'Describe your design — materials, size, style, etc...')}
             rows={4}
             className="w-full px-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-4 focus:ring-green-100 font-medium text-sm resize-none"
             required
@@ -169,7 +171,7 @@ export const MerchandiseSubmit: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-black text-gray-400 uppercase tracking-wider">
-              预估成本（元/件）
+              {t('预估成本（元/件）', 'Est. cost (¥/item)')}
             </label>
             <input
               type="number"
@@ -184,7 +186,7 @@ export const MerchandiseSubmit: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-black text-gray-400 uppercase tracking-wider">
-              目标成团人数（≥10）
+              {t('目标成团人数（≥10）', 'Group goal (≥10)')}
             </label>
             <input
               type="number"
@@ -205,7 +207,7 @@ export const MerchandiseSubmit: React.FC = () => {
           disabled={submitting || uploading || success}
           className="w-full py-4 bg-green-700 text-yellow-300 font-black text-base rounded-2xl hover:bg-green-800 transition-colors disabled:opacity-50 shadow-md"
         >
-          {submitting ? '提交中...' : '提交创意'}
+          {submitting ? t('提交中...', 'Submitting...') : t('提交创意', 'Submit idea')}
         </button>
       </form>
     </div>

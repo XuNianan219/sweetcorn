@@ -59,9 +59,27 @@ function buildPostSelect(viewerUserId) {
   return select;
 }
 
+// 商品 → 统一 feed item（kind=product），与帖子混排
+function toProductItem(p) {
+  return {
+    kind: 'product',
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    imageUrls: Array.isArray(p.imageUrls) ? p.imageUrls : [],
+    videoUrl: p.videoUrl || '',
+    wantCount: p.wantCount || 0,
+    createdAt: p.createdAt,
+    seller: p.seller
+      ? { id: p.seller.id, nickname: p.seller.nickname, avatarUrl: p.seller.avatarUrl }
+      : null,
+  };
+}
+
 // 把 Prisma 查询结果格式化为前端需要的 feed item
 function toFeedItem(post) {
   return {
+    kind: 'post',
     id: post.id,
     title: post.title,
     content: post.content,
@@ -103,26 +121,35 @@ router.get('/following', requireAuth, async (req, res, next) => {
 
     // 2. 一个都没关注 → 直接返回空（不要报错）
     if (followingIds.length === 0) {
-      return res.json({ posts: [], total: 0, page, limit, hasMore: false });
+      return res.json({ items: [], total: 0, page, limit, hasMore: false });
     }
 
-    // 3. 分页查这些作者的帖子 + 总数，并行执行（排除已软删除）
-    const where = { authorId: { in: followingIds }, deletedAt: null };
-    const [rows, total] = await Promise.all([
+    // 3. 关注的人发的「帖子 + 商品」混排，按时间倒序（池子内合并 + 分页）
+    const POOL_SIZE = 500;
+    const [postRows, productRows] = await Promise.all([
       prisma.post.findMany({
-        where,
+        where: { authorId: { in: followingIds }, deletedAt: null },
         orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
+        take: POOL_SIZE,
         select: buildPostSelect(currentUserId),
       }),
-      prisma.post.count({ where }),
+      prisma.product.findMany({
+        where: { sellerId: { in: followingIds } },
+        orderBy: { createdAt: 'desc' },
+        take: POOL_SIZE,
+        include: { seller: { select: { id: true, nickname: true, avatarUrl: true } } },
+      }),
     ]);
 
-    const posts = rows.map(toFeedItem);
-    const hasMore = skip + posts.length < total;
+    const merged = [...postRows.map(toFeedItem), ...productRows.map(toProductItem)].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 
-    res.json({ posts, total, page, limit, hasMore });
+    const total = merged.length;
+    const items = merged.slice(skip, skip + limit);
+    const hasMore = skip + items.length < total;
+
+    res.json({ items, total, page, limit, hasMore });
   } catch (error) {
     next(error);
   }
@@ -136,33 +163,52 @@ router.get('/discover', optionalAuth, async (req, res, next) => {
     const viewerUserId = req.user && req.user.userId ? req.user.userId : undefined;
     const { page, limit, skip } = parsePagination(req.query);
 
-    // TODO: 当帖子总数 > 500 时需要升级方案（Redis zset / heatScore 列）
+    // TODO: 当总量 > 500 时需要升级方案（Redis zset / heatScore 列）
     const POOL_SIZE = 500;
 
-    const rows = await prisma.post.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-      take: POOL_SIZE,
-      select: buildPostSelect(viewerUserId),
-    });
+    // 关注加权：登录用户关注的人，其内容热度 +30
+    let followingSet = new Set();
+    if (viewerUserId) {
+      const follows = await prisma.follow.findMany({
+        where: { followerId: viewerUserId },
+        select: { followingId: true },
+      });
+      followingSet = new Set(follows.map((f) => f.followingId));
+    }
+
+    const [postRows, productRows] = await Promise.all([
+      prisma.post.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        take: POOL_SIZE,
+        select: buildPostSelect(viewerUserId),
+      }),
+      prisma.product.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: POOL_SIZE,
+        include: { seller: { select: { id: true, nickname: true, avatarUrl: true } } },
+      }),
+    ]);
 
     const now = Date.now();
-    const scored = rows.map((p) => {
+    const hoursOf = (d) => (now - new Date(d).getTime()) / 3600000;
+
+    const scoredPosts = postRows.map((p) => {
       const likeCount = p._count && typeof p._count.likes === 'number' ? p._count.likes : 0;
-      const hours = (now - new Date(p.createdAt).getTime()) / 3600000;
-      const score = likeCount * 10 - hours;
-      return { post: p, score };
+      const follow = followingSet.has(p.authorId) ? 30 : 0;
+      return { item: toFeedItem(p), score: likeCount * 10 - hoursOf(p.createdAt) + follow };
+    });
+    const scoredProducts = productRows.map((p) => {
+      const follow = p.sellerId && followingSet.has(p.sellerId) ? 30 : 0;
+      return { item: toProductItem(p), score: (p.wantCount || 0) * 5 - hoursOf(p.createdAt) + follow };
     });
 
-    // 热度分数降序
-    scored.sort((a, b) => b.score - a.score);
-
-    // total 表示参与排序的池子大小（对分页连续性更友好）
+    const scored = [...scoredPosts, ...scoredProducts].sort((a, b) => b.score - a.score);
     const total = scored.length;
-    const pageSlice = scored.slice(skip, skip + limit).map((x) => toFeedItem(x.post));
-    const hasMore = skip + pageSlice.length < total;
+    const items = scored.slice(skip, skip + limit).map((x) => x.item);
+    const hasMore = skip + items.length < total;
 
-    res.json({ posts: pageSlice, total, page, limit, hasMore });
+    res.json({ items, total, page, limit, hasMore });
   } catch (error) {
     next(error);
   }

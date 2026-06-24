@@ -42,6 +42,9 @@ app.use('/api/comments', require('./routes/comments'));
 app.use('/api/celebrity-pages', require('./routes/celebrityPages'));
 app.use('/api/timeline-entries', require('./routes/timelineEntries'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/travel', require('./routes/travel'));
+app.use('/api/translate', require('./routes/translate'));
 
 app.use(notFound);
 app.use(errorHandler);

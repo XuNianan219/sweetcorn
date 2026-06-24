@@ -22,6 +22,7 @@ import { MerchCenter } from './pages/MerchCenter';
 import { MerchDetail } from './pages/MerchDetail';
 import { Merchandise } from './pages/Merchandise';
 import { MerchandiseSubmit } from './pages/MerchandiseSubmit';
+import { MerchandiseProductSubmit } from './pages/MerchandiseProductSubmit';
 import { MerchandiseIdeaDetail } from './pages/MerchandiseIdeaDetail';
 import { MerchandiseProductDetail } from './pages/MerchandiseProductDetail';
 import { Activity } from './pages/Activity';
@@ -35,17 +36,26 @@ import { CharitySubmit } from './pages/CharitySubmit';
 import { FanSupportSubmit } from './pages/FanSupportSubmit';
 import { Register } from './pages/Register';
 import { Profile } from './pages/Profile';
+import { Following } from './pages/Following';
 import { Admin } from './pages/Admin';
 import { EventsBusiness } from './pages/EventsBusiness';
 import { EventSubmit } from './pages/EventSubmit';
 import { PostDetail } from './pages/PostDetail';
 import { Notifications } from './pages/Notifications';
+import { UserProfile } from './pages/UserProfile';
+import { Conversations } from './pages/Conversations';
+import { ChatPage } from './pages/ChatPage';
 import { TimelineEntryDetail } from './pages/TimelineEntryDetail';
 import { AdminTimeline } from './pages/AdminTimeline';
 import { AdminTimelineForm } from './pages/AdminTimelineForm';
+import { AdminTravel } from './pages/AdminTravel';
+import { AdminTravelForm } from './pages/AdminTravelForm';
+import { MySubmittedEvents } from './pages/MySubmittedEvents';
 import { RequireAuth } from './components/RequireAuth';
 import { RequireAdmin } from './components/RequireAdmin';
+import { RequireSuperAdmin } from './components/RequireSuperAdmin';
 import { UserProvider } from './contexts/UserContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // 页面级路由 + 左右滑动过渡（沉浸式视频是 viewMode 切换，不属于路由，不受影响）
 const AnimatedRoutes: React.FC = () => {
@@ -84,7 +94,11 @@ const AnimatedRoutes: React.FC = () => {
           <Route path="/support-apply" element={<SupportApply />} />
           <Route path="/account" element={<AccountCenter />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/following" element={<RequireAuth><Following /></RequireAuth>} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/users/:userId" element={<UserProfile />} />
+          <Route path="/messages" element={<Conversations />} />
+          <Route path="/messages/:userId" element={<ChatPage />} />
           <Route
             path="/admin"
             element={
@@ -120,6 +134,46 @@ const AnimatedRoutes: React.FC = () => {
               </RequireAdmin>
             }
           />
+          <Route
+            path="/admin/travel"
+            element={
+              <RequireSuperAdmin>
+                <AdminTravel />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/admin/travel/experience/new"
+            element={
+              <RequireSuperAdmin>
+                <AdminTravelForm />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/admin/travel/experience/:id/edit"
+            element={
+              <RequireSuperAdmin>
+                <AdminTravelForm />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/admin/travel/route/new"
+            element={
+              <RequireSuperAdmin>
+                <AdminTravelForm />
+              </RequireSuperAdmin>
+            }
+          />
+          <Route
+            path="/admin/travel/route/:id/edit"
+            element={
+              <RequireSuperAdmin>
+                <AdminTravelForm />
+              </RequireSuperAdmin>
+            }
+          />
           <Route path="/category/merchandise" element={<Merchandise />} />
           <Route path="/category/events-business" element={<EventsBusiness />} />
           <Route
@@ -130,8 +184,17 @@ const AnimatedRoutes: React.FC = () => {
               </RequireAuth>
             }
           />
+          <Route
+            path="/events/mine"
+            element={
+              <RequireAuth>
+                <MySubmittedEvents />
+              </RequireAuth>
+            }
+          />
           <Route path="/category/events" element={<Navigate to="/category/events-business" replace />} />
           <Route path="/merchandise/submit" element={<MerchandiseSubmit />} />
+          <Route path="/merchandise/product/submit" element={<MerchandiseProductSubmit />} />
           <Route path="/merchandise/idea/:id" element={<MerchandiseIdeaDetail />} />
           <Route path="/merchandise/product/:id" element={<MerchandiseProductDetail />} />
         </Routes>
@@ -144,6 +207,7 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <UserProvider>
+        <LanguageProvider>
         <Toaster position="top-center" richColors closeButton duration={3000} />
         <NetworkStatus />
         <ErrorBoundary>
@@ -162,6 +226,7 @@ const App: React.FC = () => {
             />
           </Routes>
         </ErrorBoundary>
+        </LanguageProvider>
       </UserProvider>
     </HashRouter>
   );

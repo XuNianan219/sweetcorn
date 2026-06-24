@@ -2,8 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Heart, Save, Settings, Upload, X } from 'lucide-react';
 import { StorageService } from '../services/storage';
+import { useLang } from '../contexts/LanguageContext';
 
 export const Landing: React.FC = () => {
+  const { t } = useLang();
   const currentUser = StorageService.getCurrentUser();
   const isAdmin = StorageService.isAdmin(currentUser.id);
 
@@ -77,7 +79,7 @@ export const Landing: React.FC = () => {
             loop
             muted
             playsInline
-            onError={() => setPlaybackError('首页视频播放失败：请上传可播放的视频格式（推荐 MP4/H.264）。')}
+            onError={() => setPlaybackError(t('首页视频播放失败：请上传可播放的视频格式（推荐 MP4/H.264）。', 'Home video failed to play. Please upload a playable format (MP4/H.264 recommended).'))}
           />
         ) : (
           <div className="w-full h-full bg-black" />
@@ -93,9 +95,9 @@ export const Landing: React.FC = () => {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 text-center text-white">
         <div className="space-y-10">
           <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-tight drop-shadow-xl">
-            甜玉米
+            {t('甜玉米', 'SweetCorn')}
             <br />
-            成长乐园
+            {t('成长乐园', 'Growth Park')}
           </h1>
 
           <div className="flex flex-wrap justify-center gap-5">
@@ -103,14 +105,14 @@ export const Landing: React.FC = () => {
               to="/timeline"
               className="px-10 py-4 bg-white text-gray-900 font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-2"
             >
-              开启回忆
+              {t('开启回忆', 'Open memories')}
               <ChevronRight />
             </Link>
             <Link
               to="/discussion"
               className="px-10 py-4 bg-white/20 backdrop-blur-md border border-white/40 text-white font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-2"
             >
-              进入交流区
+              {t('进入交流区', 'Enter the community')}
               <Heart className="text-red-300 fill-current" size={20} />
             </Link>
           </div>
@@ -123,7 +125,7 @@ export const Landing: React.FC = () => {
           className="absolute top-6 right-6 z-20 px-4 py-2 rounded-xl bg-white/20 text-white border border-white/40 backdrop-blur-md font-black text-sm flex items-center gap-2"
         >
           <Settings size={14} />
-          更换首页视频
+          {t('更换首页视频', 'Change home video')}
         </button>
       )}
 
@@ -133,11 +135,11 @@ export const Landing: React.FC = () => {
             <button onClick={() => setShowConfig(false)} className="absolute right-4 top-4 text-gray-400 hover:text-red-500">
               <X size={24} />
             </button>
-            <h2 className="text-2xl font-black text-gray-900">首页视频设置（管理员）</h2>
-            <p className="text-sm text-gray-500">视频将存入浏览器 IndexedDB，可支持更大的本地文件。</p>
+            <h2 className="text-2xl font-black text-gray-900">{t('首页视频设置（管理员）', 'Home video settings (admin)')}</h2>
+            <p className="text-sm text-gray-500">{t('视频将存入浏览器 IndexedDB，可支持更大的本地文件。', 'The video is stored in browser IndexedDB, supporting larger local files.')}</p>
             <label className="w-full p-5 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 cursor-pointer flex items-center justify-center gap-2 text-gray-500 font-bold hover:border-green-200">
               <Upload size={16} />
-              {selectedFile ? selectedFile.name : '选择本地视频文件'}
+              {selectedFile ? selectedFile.name : t('选择本地视频文件', 'Choose a local video file')}
               <input type="file" accept="video/*" className="hidden" onChange={(e) => handlePickVideo(e.target.files?.[0])} />
             </label>
             <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-black">
@@ -158,7 +160,7 @@ export const Landing: React.FC = () => {
               className="w-full py-3 rounded-xl gradient-redsea text-white font-black flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Save size={16} />
-              保存首页视频
+              {t('保存首页视频', 'Save home video')}
             </button>
           </div>
         </div>

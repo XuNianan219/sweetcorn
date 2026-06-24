@@ -9,6 +9,7 @@ function serializeUser(user) {
     wechatOpenid: user.wechatOpenid,
     nickname: user.nickname,
     avatarUrl: user.avatarUrl,
+    bio: user.bio ?? '',
     role: user.role ?? 'user',
     createdAt: user.createdAt
   };
@@ -32,7 +33,7 @@ function serializePost(post) {
     mediaUrls: Array.isArray(post.mediaUrls) ? post.mediaUrls : [],
     mediaType: post.mediaType || 'none',
     authorId: post.authorId,
-    author: post.author ? { nickname: post.author.nickname, avatarUrl: post.author.avatarUrl } : null,
+    author: post.author ? { id: post.author.id, nickname: post.author.nickname, avatarUrl: post.author.avatarUrl } : null,
   };
 
   // 如果查询结果带有 _count.likes，则附加 likeCount 字段

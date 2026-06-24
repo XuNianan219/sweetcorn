@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import type { CommentItem as CommentData } from '../../services/commentService';
 import { CommentItem } from './CommentItem';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface CommentReplyListProps {
   parent: CommentData;
@@ -28,6 +29,7 @@ export const CommentReplyList: React.FC<CommentReplyListProps> = ({
   onExpand,
   onCollapse,
 }) => {
+  const { t } = useLang();
   const replies = parent.replies || [];
   if (replies.length === 0 && parent.replyCount === 0) return null;
 
@@ -55,7 +57,7 @@ export const CommentReplyList: React.FC<CommentReplyListProps> = ({
           className="ml-8 flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-700 py-1"
         >
           {loadingMore ? <Loader2 size={13} className="animate-spin" /> : <ChevronDown size={14} />}
-          查看全部 {parent.replyCount} 条回复
+          {t(`查看全部 ${parent.replyCount} 条回复`, `View all ${parent.replyCount} replies`)}
         </button>
       )}
 
@@ -65,7 +67,7 @@ export const CommentReplyList: React.FC<CommentReplyListProps> = ({
           className="ml-8 flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-gray-600 py-1"
         >
           <ChevronUp size={14} />
-          收起回复
+          {t('收起回复', 'Collapse replies')}
         </button>
       )}
     </div>

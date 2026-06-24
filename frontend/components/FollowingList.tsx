@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, UserMinus, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, MessageCircle, UserMinus, Users } from 'lucide-react';
 import { getFollowing, toggleFollow, type FollowUser } from '../services/followService';
 import { showSuccess } from '../utils/toast';
+import { useLang } from '../contexts/LanguageContext';
 
 interface FollowingListProps {
   userId: string;
 }
 
 export const FollowingList: React.FC<FollowingListProps> = ({ userId }) => {
+  const { t } = useLang();
+  const navigate = useNavigate();
   const [list, setList] = useState<FollowUser[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -32,24 +36,23 @@ export const FollowingList: React.FC<FollowingListProps> = ({ userId }) => {
   }, [userId]);
 
   const goAuthor = (u: FollowUser) => {
-    // TODO: 作者主页未来再做
-    // eslint-disable-next-line no-console
-    console.log('跳转作者主页', u.id, u.nickname);
+    navigate(`/users/${u.id}`);
   };
 
   const handleUnfollow = async (u: FollowUser) => {
     if (busyId) return;
-    if (!window.confirm(`确定取消关注 ${u.nickname || '该用户'}?`)) return;
+    const who = u.nickname || t('该用户', 'this user');
+    if (!window.confirm(t(`确定取消关注 ${who}?`, `Unfollow ${who}?`))) return;
     setBusyId(u.id);
     setError('');
     try {
       await toggleFollow(u.id);
       // 乐观更新：移除卡片 + 计数 -1
       setList((prev) => prev.filter((x) => x.id !== u.id));
-      setTotal((t) => Math.max(0, t - 1));
-      showSuccess(`已取消关注 ${u.nickname || '该用户'}`);
+      setTotal((n) => Math.max(0, n - 1));
+      showSuccess(t(`已取消关注 ${who}`, `Unfollowed ${who}`));
     } catch (e: any) {
-      setError(e?.message || '取消关注失败');
+      setError(e?.message || t('取消关注失败', 'Failed to unfollow'));
     } finally {
       setBusyId(null);
     }
@@ -62,8 +65,8 @@ export const FollowingList: React.FC<FollowingListProps> = ({ userId }) => {
           <Users size={22} />
         </span>
         <div>
-          <h2 className="text-lg font-black text-green-950">我的关注</h2>
-          <p className="text-xs text-gray-400 font-medium">{total} 人</p>
+          <h2 className="text-lg font-black text-green-950">{t('我的关注', 'Following')}</h2>
+          <p className="text-xs text-gray-400 font-medium">{total} {t('人', '')}</p>
         </div>
       </div>
 
@@ -78,20 +81,20 @@ export const FollowingList: React.FC<FollowingListProps> = ({ userId }) => {
       ) : list.length === 0 ? (
         <div className="py-12 text-center border-4 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/40">
           <Users size={40} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400 font-bold">你还没关注任何人，去其他地方逛逛吧</p>
+          <p className="text-gray-400 font-bold">{t('你还没关注任何人，去其他地方逛逛吧', 'You’re not following anyone yet — go explore')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="space-y-2">
           {list.map((u) => {
             const isUrl = !!u.avatarUrl && /^https?:\/\//.test(u.avatarUrl);
             return (
               <div
                 key={u.id}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-green-50/40 border border-green-50"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50/40 border border-green-50"
               >
                 <button
                   onClick={() => goAuthor(u)}
-                  className="flex items-center gap-3 min-w-0 flex-grow text-left"
+                  className="flex items-center gap-3 min-w-0 flex-1 text-left"
                 >
                   <div className="w-12 h-12 rounded-full gradient-ningyuzhi shadow-sm flex items-center justify-center overflow-hidden shrink-0">
                     {isUrl ? (
@@ -101,8 +104,15 @@ export const FollowingList: React.FC<FollowingListProps> = ({ userId }) => {
                     )}
                   </div>
                   <span className="font-bold text-gray-800 truncate">
-                    {u.nickname || '玉米成员'}
+                    {u.nickname || t('玉米成员', 'Corn member')}
                   </span>
+                </button>
+                <button
+                  onClick={() => navigate(`/messages/${u.id}`)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-green-700 border border-green-300 hover:bg-green-50 transition-colors shrink-0"
+                >
+                  <MessageCircle size={13} />
+                  {t('私信', 'Message')}
                 </button>
                 <button
                   onClick={() => handleUnfollow(u)}
@@ -114,7 +124,7 @@ export const FollowingList: React.FC<FollowingListProps> = ({ userId }) => {
                   ) : (
                     <UserMinus size={13} />
                   )}
-                  取关
+                  {t('取关', 'Unfollow')}
                 </button>
               </div>
             );

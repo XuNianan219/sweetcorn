@@ -12,18 +12,19 @@ import {
   User,
 } from 'lucide-react';
 import { useCurrentUser } from '../contexts/UserContext';
+import { useLang } from '../contexts/LanguageContext';
 import { NotificationBell } from './NotificationBell';
 
 const navItems = [
-  { path: '/timeline', label: '甜玉米日记', icon: Heart },
-  { path: '/celeb-a', label: '梓渝', icon: User },
-  { path: '/celeb-b', label: '田栩宁', icon: User },
-  { path: '/discussion', label: '嗑学研究所', icon: MessageCircle },
-  { path: '/media', label: '嗑学影像', icon: Clapperboard },
-  { path: '/article', label: '嗑学论文', icon: BookOpen },
-  { path: '/category/merchandise', label: '甜玉米市集', icon: Package },
-  { path: '/category/events-business', label: '嗑学情报站', icon: Calendar },
-  { path: '/travel', label: '嗑学旅行', icon: MapPin },
+  { path: '/timeline', label: '甜玉米日记', en: 'Diary', icon: Heart },
+  { path: '/celeb-a', label: '梓渝', en: 'Ziyu', icon: User },
+  { path: '/celeb-b', label: '田栩宁', en: 'Tianxuning', icon: User },
+  { path: '/discussion', label: '嗑学研究所', en: 'Discussion', icon: MessageCircle },
+  { path: '/media', label: '嗑学影像', en: 'Media', icon: Clapperboard },
+  { path: '/article', label: '嗑学论文', en: 'Articles', icon: BookOpen },
+  { path: '/category/merchandise', label: '甜玉米市集', en: 'Market', icon: Package },
+  { path: '/category/events-business', label: '嗑学情报站', en: 'Events', icon: Calendar },
+  { path: '/travel', label: '嗑学旅行', en: 'Travel', icon: MapPin },
 ];
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -34,6 +35,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   // 后端账号体系：控制顶部账号区（登录 / 头像 / 管理员盾牌）
   const { user: authUser, isLoggedIn, isAdmin: authIsAdmin } = useCurrentUser();
+  const { lang, t } = useLang();
 
   const avatarIsUrl = !!authUser?.avatarUrl && /^https?:\/\//.test(authUser.avatarUrl);
   // 盾牌底色：超级管理员紫色，普通管理员金色
@@ -54,7 +56,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <div className="min-h-screen flex flex-col bg-[#fcf9e8]">
       <header
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
         className={`relative sticky top-0 z-50 transition-all duration-300 ${isLanding ? 'bg-white/40 backdrop-blur-sm' : 'bg-white/80 backdrop-blur-md border-b border-[#E2F7C1]'}`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,7 +70,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <div className="w-9 h-9 rounded-full gradient-ningyuzhi shadow-sm flex items-center justify-center text-lg leading-none">
                 🌽
               </div>
-              <span className="text-base font-black text-green-700 hidden sm:inline">甜玉米</span>
+              <span className="text-base font-black text-green-700 hidden sm:inline">{lang === 'en' ? 'SweetCorn' : '甜玉米'}</span>
             </div>
             <button
             className="md:hidden p-2"
@@ -96,7 +97,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   }
                 >
                   <item.icon size={14} />
-                  <span>{item.label}</span>
+                  <span>{lang === 'en' ? item.en : item.label}</span>
                 </NavLink>
               ))}
 
@@ -111,7 +112,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   className="md:ml-2 flex items-center space-x-1 px-4 py-1.5 rounded-full text-sm font-bold gradient-ningyuzhi text-green-950 hover:scale-105 transition-transform whitespace-nowrap"
                 >
                   <User size={14} />
-                  <span>登录</span>
+                  <span>{lang === 'en' ? 'Log in' : '登录'}</span>
                 </NavLink>
               ) : (
                 <button
@@ -119,13 +120,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     setIsMobileMenuOpen(false);
                     navigate('/profile');
                   }}
-                  title={authUser?.nickname || '个人主页'}
-                  aria-label="个人主页"
+                  title={authUser?.nickname || t('个人主页', 'Profile')}
+                  aria-label={t('个人主页', 'Profile')}
                   className="md:ml-2 relative shrink-0 w-9 h-9 rounded-full hover:scale-105 transition-transform"
                 >
                   <div className="w-9 h-9 rounded-full gradient-ningyuzhi shadow-sm flex items-center justify-center overflow-hidden">
                     {avatarIsUrl ? (
-                      <img src={authUser!.avatarUrl!} alt="头像" className="w-full h-full object-cover" />
+                      <img src={authUser!.avatarUrl!} alt={t('头像', 'Avatar')} className="w-full h-full object-cover" />
                     ) : (
                       <User size={18} className="text-green-900" />
                     )}
@@ -148,7 +149,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {isMobileMenuOpen && (
         <div
           onClick={() => setIsMobileMenuOpen(false)}
-          aria-label="关闭菜单"
+          aria-label={t('关闭菜单', 'Close menu')}
           className="fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity duration-200 animate-fadeIn"
         />
       )}
@@ -156,7 +157,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <main className={`flex-grow ${isLanding ? '' : 'max-w-7xl mx-auto w-full px-4 pt-3 pb-8 md:py-8'}`}>{children}</main>
 
       <footer className="bg-white py-8 border-t border-[#E2F7C1]">
-        <div className="text-center text-gray-400 text-sm font-medium">© 2026 甜玉米 CP 应援站</div>
+        <div className="text-center text-gray-400 text-sm font-medium">{t('© 2026 甜玉米 CP 应援站', '© 2026 SweetCorn CP Fan Station')}</div>
       </footer>
     </div>
   );

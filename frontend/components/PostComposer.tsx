@@ -4,6 +4,7 @@ import { createPost } from '../services/postsApi';
 import { uploadMedia } from '../services/mediaService';
 import { getCategoryName } from '../constants/categories';
 import { showSuccess } from '../utils/toast';
+import { useLang } from '../contexts/LanguageContext';
 
 interface PostComposerProps {
   category: string;
@@ -23,9 +24,10 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t, lang } = useLang();
 
-  const categoryName = getCategoryName(category);
-  const ph = placeholder ?? `在${categoryName}发一条动态…支持 #话题标签`;
+  const categoryName = getCategoryName(category, lang);
+  const ph = placeholder ?? t(`在${categoryName}发一条动态…支持 #话题标签`, `Share something in ${categoryName}… #tags supported`);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -40,7 +42,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       }
       setImages((prev) => [...prev, ...urls]);
     } catch (err: any) {
-      setError(err?.message || '图片上传失败');
+      setError(err?.message || t('图片上传失败', 'Image upload failed'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -67,10 +69,10 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       setTitle('');
       setContent('');
       setImages([]);
-      showSuccess(`已发布到「${categoryName}」`);
+      showSuccess(t(`已发布到「${categoryName}」`, `Posted to "${categoryName}"`));
       onPosted?.();
     } catch (err: any) {
-      setError(err?.message || '发布失败');
+      setError(err?.message || t('发布失败', 'Failed to post'));
     } finally {
       setSubmitting(false);
     }
@@ -82,8 +84,8 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       className="bg-white rounded-3xl border border-green-50 shadow-sm p-6 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black text-green-950">发帖到「{categoryName}」</h3>
-        <span className="text-xs text-gray-400 font-medium">支持 #话题</span>
+        <h3 className="text-lg font-black text-green-950">{t(`发帖到「${categoryName}」`, `Post to "${categoryName}"`)}</h3>
+        <span className="text-xs text-gray-400 font-medium">{t('支持 #话题', '#tags supported')}</span>
       </div>
 
       {error && (
@@ -96,7 +98,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="标题（可选）"
+        placeholder={t('标题（可选）', 'Title (optional)')}
         className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-green-100 outline-none text-base font-semibold placeholder:text-gray-300 transition-all"
       />
 
@@ -127,14 +129,14 @@ export const PostComposer: React.FC<PostComposerProps> = ({
           ) : (
             <ImagePlus size={16} />
           )}
-          {uploading ? '上传中…' : '添加图片'}
+          {uploading ? t('上传中…', 'Uploading…') : t('添加图片', 'Add images')}
         </button>
 
         {images.map((url, idx) => (
           <div key={url} className="relative group/thumb">
             <img
               src={url}
-              alt={`预览 ${idx + 1}`}
+              alt={t(`预览 ${idx + 1}`, `Preview ${idx + 1}`)}
               className="w-16 h-16 object-cover rounded-lg border border-gray-100"
             />
             <button
@@ -155,7 +157,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({
           className="px-6 py-2.5 gradient-ningyuzhi text-green-950 font-black rounded-xl hover:scale-[1.03] transition-transform flex items-center gap-2 disabled:opacity-50"
         >
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <PlusCircle size={16} />}
-          发布
+          {t('发布', 'Post')}
         </button>
       </div>
     </form>

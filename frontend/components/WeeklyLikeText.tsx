@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { type FeedPost } from '../services/feedService';
+import { useLang } from '../contexts/LanguageContext';
 
 interface WeeklyLikeTextProps {
   posts: FeedPost[];
@@ -10,14 +11,15 @@ interface WeeklyLikeTextProps {
 
 export const WeeklyLikeText: React.FC<WeeklyLikeTextProps> = ({ posts, onToggleLike }) => {
   const navigate = useNavigate();
+  const { t } = useLang();
   if (!posts || posts.length === 0) return null;
 
   return (
     <section className="py-2">
-      <h2 className="text-sm font-semibold text-gray-700 tracking-wide mb-4">本周 Like</h2>
+      <h2 className="text-sm font-semibold text-gray-700 tracking-wide mb-4">{t('本周 Like', 'Weekly Likes')}</h2>
       <ul className="space-y-5">
         {posts.map((post) => {
-          const title = post.title?.trim() || post.content?.trim().slice(0, 40) || '无题';
+          const title = post.title?.trim() || post.content?.trim().slice(0, 40) || t('无题', 'Untitled');
           return (
             <li
               key={post.id}
@@ -30,7 +32,7 @@ export const WeeklyLikeText: React.FC<WeeklyLikeTextProps> = ({ posts, onToggleL
                   {title}
                 </span>
                 <span className="text-xs text-gray-400 truncate">
-                  —— {post.author?.nickname || '匿名玉米'}
+                  —— {post.author?.nickname || t('匿名玉米', 'Anonymous corn')}
                 </span>
               </div>
               <button
@@ -39,7 +41,7 @@ export const WeeklyLikeText: React.FC<WeeklyLikeTextProps> = ({ posts, onToggleL
                   e.stopPropagation();
                   onToggleLike(post.id);
                 }}
-                aria-label={post.isLikedByMe ? '取消点赞' : '点赞'}
+                aria-label={post.isLikedByMe ? t('取消点赞', 'Unlike') : t('点赞', 'Like')}
                 className="p-1.5 text-gray-300 hover:text-red-500 transition-colors flex-shrink-0"
               >
                 <Heart

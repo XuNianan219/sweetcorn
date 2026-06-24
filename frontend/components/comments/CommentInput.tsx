@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, Send } from 'lucide-react';
 import { postComment, type CommentItem } from '../../services/commentService';
 import { useCurrentUser } from '../../contexts/UserContext';
+import { useLang } from '../../contexts/LanguageContext';
 import { showSuccess } from '../../utils/toast';
 
 interface CommentInputProps {
@@ -24,6 +25,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isLoggedIn } = useCurrentUser();
+  const { t } = useLang();
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +42,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     const text = content.trim();
     if (!text || submitting) return;
     if (text.length > MAX) {
-      setError(`评论最多 ${MAX} 字`);
+      setError(t(`评论最多 ${MAX} 字`, `Comment max ${MAX} characters`));
       return;
     }
     setSubmitting(true);
@@ -50,9 +52,9 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       setContent('');
       if (taRef.current) taRef.current.style.height = 'auto';
       onSuccess(comment);
-      showSuccess(parentId ? '回复已发布' : '评论已发布');
+      showSuccess(parentId ? t('回复已发布', 'Reply posted') : t('评论已发布', 'Comment posted'));
     } catch (e: any) {
-      setError(e?.message || '发送失败');
+      setError(e?.message || t('发送失败', 'Failed to send'));
     } finally {
       setSubmitting(false);
     }
@@ -64,7 +66,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
         onClick={() => navigate('/login')}
         className="w-full py-3 rounded-2xl bg-yellow-50 text-green-700 font-bold text-sm hover:bg-yellow-100 transition-colors border border-green-50"
       >
-        登录后评论
+        {t('登录后评论', 'Log in to comment')}
       </button>
     );
   }
@@ -82,7 +84,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSubmit();
         }}
-        placeholder={placeholder || '说点什么吧…'}
+        placeholder={placeholder || t('说点什么吧…', 'Say something…')}
         rows={1}
         className="w-full bg-transparent resize-none outline-none text-sm font-medium placeholder:text-gray-300 leading-relaxed"
       />
@@ -98,7 +100,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             className="flex items-center gap-1.5 px-4 py-1.5 gradient-ningyuzhi text-green-950 font-black rounded-full text-sm hover:scale-[1.03] transition-transform disabled:opacity-50"
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            发送
+            {t('发送', 'Send')}
           </button>
         </div>
       </div>

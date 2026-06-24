@@ -13,6 +13,7 @@ export interface FeedAuthor {
 }
 
 export interface FeedPost {
+  kind?: 'post';
   id: string;
   title: string;
   content: string;
@@ -39,13 +40,36 @@ export interface FeedResponse {
   hasMore: boolean;
 }
 
-// 关注流：必须带 token
-export async function getFollowingFeed(page: number, limit: number): Promise<FeedResponse> {
+// 商品类 feed item（与帖子混排）
+export interface FeedProduct {
+  kind: 'product';
+  id: string;
+  name: string;
+  price: number;
+  imageUrls: string[];
+  videoUrl?: string;
+  wantCount: number;
+  createdAt: string;
+  seller: { id: string; nickname: string | null; avatarUrl: string | null } | null;
+}
+
+export type FeedItem = FeedPost | FeedProduct;
+
+export interface MixedFeedResponse {
+  items: FeedItem[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+// 关注流（混排帖子+商品）：必须带 token
+export async function getFollowingFeed(page: number, limit: number): Promise<MixedFeedResponse> {
   return apiFetch(`${BASE_URL}/feed/following?page=${page}&limit=${limit}`);
 }
 
-// 推荐流：可选 token（带了会返回 isLikedByMe）
-export async function getDiscoverFeed(page: number, limit: number): Promise<FeedResponse> {
+// 推荐流（混排帖子+商品）：可选 token（带了会返回 isLikedByMe + 关注加权）
+export async function getDiscoverFeed(page: number, limit: number): Promise<MixedFeedResponse> {
   return apiFetch(`${BASE_URL}/feed/discover?page=${page}&limit=${limit}`);
 }
 

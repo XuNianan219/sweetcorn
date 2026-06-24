@@ -1,6 +1,15 @@
 
 import React, { useState } from 'react';
 import { ShoppingBag, ExternalLink, Sparkles } from 'lucide-react';
+import { useLang } from '../contexts/LanguageContext';
+
+// 艺人/品类名英文映射（值保持中文以兼容筛选）
+const NAME_EN: Record<string, string> = {
+  全部: 'All',
+  梓渝: 'Ziyu',
+  田栩宁: 'Tianxuning',
+  双人: 'Duo',
+};
 
 /**
  * ⚠️ 虚拟链接配置：管理员可在此统一修改跳转链接
@@ -23,15 +32,17 @@ interface BrandDeal {
 }
 
 export const Commercial: React.FC = () => {
+  const { t } = useLang();
+  const tn = (s: string) => t(s, NAME_EN[s] ?? s);
   const [activeCategory, setActiveCategory] = useState<string>('全部');
 
-  const brands: BrandDeal[] = [
-    { id: 1, celeb: '梓渝', brand: '某高端护肤品牌', type: '全球代言人', image: 'https://picsum.photos/seed/brand1/600/400' },
-    { id: 2, celeb: '田栩宁', brand: '某国民饮料品牌', type: '品牌大使', image: 'https://picsum.photos/seed/brand2/600/400' },
-    { id: 3, celeb: '双人', brand: '某时尚杂志首刊', type: '封面人物', image: 'https://picsum.photos/seed/brand3/600/400' },
-    { id: 4, celeb: '梓渝', brand: '奢华珠宝系列', type: '品牌挚友', image: 'https://picsum.photos/seed/brand4/600/400' },
-    { id: 5, celeb: '田栩宁', brand: '运动潮流服饰', type: '代言人', image: 'https://picsum.photos/seed/brand5/600/400' },
-    { id: 6, celeb: '双人', brand: '甜蜜糖果礼盒', type: '特别合作', image: 'https://picsum.photos/seed/brand6/600/400' },
+  const brands: (BrandDeal & { brandEn: string; typeEn: string })[] = [
+    { id: 1, celeb: '梓渝', brand: '某高端护肤品牌', brandEn: 'A premium skincare brand', type: '全球代言人', typeEn: 'Global ambassador', image: 'https://picsum.photos/seed/brand1/600/400' },
+    { id: 2, celeb: '田栩宁', brand: '某国民饮料品牌', brandEn: 'A national beverage brand', type: '品牌大使', typeEn: 'Brand ambassador', image: 'https://picsum.photos/seed/brand2/600/400' },
+    { id: 3, celeb: '双人', brand: '某时尚杂志首刊', brandEn: 'A fashion magazine debut', type: '封面人物', typeEn: 'Cover stars', image: 'https://picsum.photos/seed/brand3/600/400' },
+    { id: 4, celeb: '梓渝', brand: '奢华珠宝系列', brandEn: 'A luxury jewelry line', type: '品牌挚友', typeEn: 'Brand friend', image: 'https://picsum.photos/seed/brand4/600/400' },
+    { id: 5, celeb: '田栩宁', brand: '运动潮流服饰', brandEn: 'Sporty streetwear', type: '代言人', typeEn: 'Spokesperson', image: 'https://picsum.photos/seed/brand5/600/400' },
+    { id: 6, celeb: '双人', brand: '甜蜜糖果礼盒', brandEn: 'Sweet candy gift box', type: '特别合作', typeEn: 'Special collab', image: 'https://picsum.photos/seed/brand6/600/400' },
   ];
 
   const categories = ['全部', '梓渝', '田栩宁', '双人'];
@@ -48,7 +59,7 @@ export const Commercial: React.FC = () => {
     <div className="space-y-12 animate-fadeIn">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <h1 className="text-3xl font-black text-green-900 flex items-center gap-2">
-          <ShoppingBag className="text-green-600" /> 商务区 · 品牌代言
+          <ShoppingBag className="text-green-600" /> {t('商务区 · 品牌代言', 'Business · Endorsements')}
         </h1>
         <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-green-50 self-start">
           {categories.map(cat => (
@@ -59,7 +70,7 @@ export const Commercial: React.FC = () => {
                 activeCategory === cat ? 'gradient-ningyuzhi text-green-900 shadow-sm' : 'text-gray-400 hover:text-green-600'
               }`}
             >
-              {cat}
+              {tn(cat)}
             </button>
           ))}
         </div>
@@ -73,16 +84,16 @@ export const Commercial: React.FC = () => {
               <div className="absolute top-4 left-4">
                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg ${
                   brand.celeb === '梓渝' ? 'gradient-ziyu text-white' : brand.celeb === '田栩宁' ? 'gradient-tian text-gray-900' : 'gradient-redsea text-white'
-                }`}>{brand.celeb}</span>
+                }`}>{tn(brand.celeb)}</span>
               </div>
             </div>
             <div className="p-8 space-y-6">
               <div className="space-y-1">
-                <div className="flex items-center gap-1 text-xs text-green-600 font-bold"><Sparkles size={12} /> {brand.type}</div>
-                <h3 className="text-2xl font-black text-gray-900 leading-tight">{brand.brand}</h3>
+                <div className="flex items-center gap-1 text-xs text-green-600 font-bold"><Sparkles size={12} /> {t(brand.type, brand.typeEn)}</div>
+                <h3 className="text-2xl font-black text-gray-900 leading-tight">{t(brand.brand, brand.brandEn)}</h3>
               </div>
               <button onClick={() => handleSupportClick(brand.id)} className="w-full py-4 bg-gray-50 text-gray-900 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-green-50 hover:text-green-900 transition-all border border-transparent hover:border-green-100">
-                <ShoppingBag size={20} /> 支持同款 <ExternalLink size={14} />
+                <ShoppingBag size={20} /> {t('支持同款', 'Shop the look')} <ExternalLink size={14} />
               </button>
             </div>
           </div>
@@ -92,10 +103,10 @@ export const Commercial: React.FC = () => {
       <div className="bg-white rounded-[2.5rem] p-10 border border-green-100 flex flex-col md:flex-row items-center gap-8 shadow-sm">
         <div className="w-20 h-20 rounded-2xl gradient-ningyuzhi flex items-center justify-center text-green-900 shadow-inner"><Sparkles size={32} /></div>
         <div className="flex-grow space-y-2 text-center md:text-left">
-          <h3 className="text-2xl font-black text-gray-900">购买登记 & 积分奖励</h3>
-          <p className="text-gray-500 font-medium italic">每一份记录都将累积为应援乐园的专属积分，见证热爱与陪伴。</p>
+          <h3 className="text-2xl font-black text-gray-900">{t('购买登记 & 积分奖励', 'Purchase Log & Point Rewards')}</h3>
+          <p className="text-gray-500 font-medium italic">{t('每一份记录都将累积为应援乐园的专属积分，见证热爱与陪伴。', 'Every record earns exclusive points — a record of love and support.')}</p>
         </div>
-        <button className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:scale-105 transition-transform shadow-lg">立即登记</button>
+        <button className="px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:scale-105 transition-transform shadow-lg">{t('立即登记', 'Register now')}</button>
       </div>
     </div>
   );

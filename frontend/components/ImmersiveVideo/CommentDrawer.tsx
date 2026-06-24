@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { FeedPost } from '../../services/feedService';
 import { CommentSection } from '../comments/CommentSection';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface CommentDrawerProps {
   post: FeedPost;
@@ -11,6 +12,7 @@ interface CommentDrawerProps {
 }
 
 export const CommentDrawer: React.FC<CommentDrawerProps> = ({ post, open, onClose }) => {
+  const { t } = useLang();
   const [render, setRender] = useState(open);
   const [visible, setVisible] = useState(false);
 
@@ -59,7 +61,7 @@ export const CommentDrawer: React.FC<CommentDrawerProps> = ({ post, open, onClos
       >
         {/* 头部 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h3 className="text-base font-black text-green-950">评论</h3>
+          <h3 className="text-base font-black text-green-950">{t('评论', 'Comments')}</h3>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500"

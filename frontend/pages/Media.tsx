@@ -19,13 +19,13 @@ export const Media: React.FC = () => {
         <CategorySection key={refreshKey} category="media" />
       </PullToRefreshWrapper>
 
-      {/* 沉浸式视频流：全屏覆盖 */}
+      {/* 沉浸式视频流：全屏覆盖（内部左上角有 ← 返回按钮退出） */}
       {viewMode === 'immersive' && (
         <ImmersiveVideoFeed onExit={() => setViewMode('waterfall')} />
       )}
 
-      {/* 左下角浮动视图切换：两种模式下都可见可点 */}
-      <ViewModeSwitch mode={viewMode} onChange={setViewMode} />
+      {/* 视图切换按钮：仅瀑布流下显示，避免沉浸式时挡住视频底部文字 */}
+      {viewMode === 'waterfall' && <ViewModeSwitch mode={viewMode} onChange={setViewMode} />}
     </div>
   );
 };

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Compass, Loader2, Sparkles } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
+import { useLang } from '../../contexts/LanguageContext';
 
 const COMPANY_SITE = 'https://www.example-tourism-official.com';
 
 export const AITravelPlanner: React.FC = () => {
+  const { t } = useLang();
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiResult, setAiResult] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -29,10 +31,10 @@ export const AITravelPlanner: React.FC = () => {
         3. 语言风格亲切、专业。
         4. 字数约350字左右。`,
       });
-      setAiResult(response.text || '无法生成内容，请稍后再试。');
+      setAiResult(response.text || t('无法生成内容，请稍后再试。', 'Could not generate content, please try again later.'));
     } catch (err) {
       console.error(err);
-      setAiResult('生成失败，请检查网络连接。');
+      setAiResult(t('生成失败，请检查网络连接。', 'Generation failed, please check your connection.'));
     } finally {
       setIsGenerating(false);
     }
@@ -45,16 +47,16 @@ export const AITravelPlanner: React.FC = () => {
           <Compass size={48} className="animate-float" />
         </div>
         <div className="flex-grow space-y-4 text-center md:text-left">
-          <h3 className="text-3xl font-black text-gray-950">AI 智能旅程定制</h3>
+          <h3 className="text-3xl font-black text-gray-950">{t('AI 智能旅程定制', 'AI Trip Planner')}</h3>
           <p className="text-gray-500 font-medium text-lg leading-relaxed">
-            输入具体的旅游需求或路线，AI 将为你即刻生成专属的同款浪漫攻略。
+            {t('输入具体的旅游需求或路线，AI 将为你即刻生成专属的同款浪漫攻略。', 'Enter your travel needs or route and AI will instantly craft a personalized itinerary.')}
           </p>
         </div>
         <button
           onClick={() => handleJump(COMPANY_SITE)}
           className="md:ml-auto px-12 py-5 gradient-ningyuzhi text-green-950 font-black rounded-2xl shadow-lg hover:scale-105 transition-transform"
         >
-          咨询在线导游
+          {t('咨询在线导游', 'Ask a guide')}
         </button>
       </div>
       <div className="bg-gray-50 rounded-[2.5rem] p-8 space-y-8">
@@ -63,7 +65,7 @@ export const AITravelPlanner: React.FC = () => {
             type="text"
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="例如：从火车站出发，想去梓渝去过的所有古镇，还要看太湖落日..."
+            placeholder={t('例如：从火车站出发，想去梓渝去过的所有古镇，还要看太湖落日...', 'e.g. From the train station, visit all the old towns Ziyu went to, plus sunset over Lake Tai...')}
             className="flex-grow p-5 rounded-2xl bg-white border-none outline-none focus:ring-4 focus:ring-green-100 font-medium shadow-sm"
             onKeyDown={(e) => e.key === 'Enter' && generateAITravelPlan()}
           />
@@ -77,13 +79,13 @@ export const AITravelPlanner: React.FC = () => {
             ) : (
               <Sparkles size={20} />
             )}{' '}
-            AI 定制生成
+            {t('AI 定制生成', 'Generate with AI')}
           </button>
         </div>
         {aiResult && (
           <div className="bg-white p-8 rounded-[2rem] border border-green-100 shadow-inner animate-fadeIn">
             <div className="flex items-center gap-2 text-green-700 font-black mb-4">
-              <Sparkles size={18} /> 专属定制攻略：
+              <Sparkles size={18} /> {t('专属定制攻略：', 'Your custom itinerary:')}
             </div>
             <div className="prose prose-green max-w-none text-gray-700 font-medium leading-relaxed whitespace-pre-wrap">
               {aiResult}

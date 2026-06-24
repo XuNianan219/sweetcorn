@@ -144,6 +144,13 @@ export const EVENT_TYPE_META: Record<EventType, { label: string; emoji: string; 
   endorsement: { label: '代言', emoji: '📢', cta: '查看详情' },
 };
 
+// 英文映射（供 lang === 'en' 时使用）
+export const EVENT_TYPE_META_EN: Record<EventType, { label: string; cta: string }> = {
+  performance: { label: 'Show', cta: 'Buy tickets' },
+  merchandise: { label: 'Merch', cta: 'Buy' },
+  endorsement: { label: 'Deal', cta: 'View details' },
+};
+
 // 类型徽章配色（黄绿色系内）：演出=绿、周边=黄、代言=橙
 export const EVENT_TYPE_BADGE: Record<EventType, string> = {
   performance: 'bg-green-100 text-green-700',
@@ -151,21 +158,25 @@ export const EVENT_TYPE_BADGE: Record<EventType, string> = {
   endorsement: 'bg-orange-100 text-orange-600',
 };
 
-export function formatEventDate(iso: string): string {
+export function formatEventDate(iso: string, lang: 'zh' | 'en' = 'zh'): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(
-    d.getMinutes()
-  ).padStart(2, '0')}`;
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  if (lang === 'en') {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[d.getMonth()]} ${d.getDate()}, ${hh}:${mm}`;
+  }
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${hh}:${mm}`;
 }
 
 // 返回距开始的倒计时文本；已开始返回「进行中/已结束」
-export function countdownText(startIso: string): string {
+export function countdownText(startIso: string, lang: 'zh' | 'en' = 'zh'): string {
   const diff = new Date(startIso).getTime() - Date.now();
-  if (diff <= 0) return '已开始';
+  if (diff <= 0) return lang === 'en' ? 'Started' : '已开始';
   const days = Math.floor(diff / (24 * 3600 * 1000));
   const hours = Math.floor((diff % (24 * 3600 * 1000)) / (3600 * 1000));
-  if (days > 0) return `距开始 ${days} 天 ${hours} 时`;
+  if (days > 0) return lang === 'en' ? `in ${days}d ${hours}h` : `距开始 ${days} 天 ${hours} 时`;
   const mins = Math.floor((diff % (3600 * 1000)) / (60 * 1000));
-  return `距开始 ${hours} 时 ${mins} 分`;
+  return lang === 'en' ? `in ${hours}h ${mins}m` : `距开始 ${hours} 时 ${mins} 分`;
 }

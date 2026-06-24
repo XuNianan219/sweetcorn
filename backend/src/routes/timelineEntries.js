@@ -89,9 +89,14 @@ router.patch('/:id', requireAdmin, async (req, res, next) => {
     const { date, title, summary, content, image, orderNum, isPublished } = req.body;
     const data = {};
     if (date !== undefined) data.date = String(date).trim();
-    if (title !== undefined) data.title = String(title).trim();
+    if (title !== undefined) {
+      data.title = String(title).trim();
+      data.titleEn = null; // 标题已改，清空英文译文缓存
+    }
     if (summary !== undefined) data.summary = String(summary);
     if (content !== undefined) data.content = String(content);
+    // 详情页正文 = content || summary，二者任一变化都清空正文译文缓存
+    if (content !== undefined || summary !== undefined) data.contentEn = null;
     if (image !== undefined) data.image = String(image);
     if (orderNum !== undefined) data.orderNum = Number(orderNum) || 0;
     if (isPublished !== undefined) data.isPublished = Boolean(isPublished);

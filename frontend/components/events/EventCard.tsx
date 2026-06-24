@@ -4,15 +4,20 @@ import {
   type EventItem,
   EVENT_TYPE_BADGE,
   EVENT_TYPE_META,
+  EVENT_TYPE_META_EN,
   formatEventDate,
 } from '../../services/eventsService';
+import { useLang } from '../../contexts/LanguageContext';
 
 interface EventCardProps {
   event: EventItem;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({ event }) => {
+  const { lang } = useLang();
   const meta = EVENT_TYPE_META[event.eventType];
+  const metaLabel = lang === 'en' ? EVENT_TYPE_META_EN[event.eventType].label : meta.label;
+  const metaCta = lang === 'en' ? EVENT_TYPE_META_EN[event.eventType].cta : meta.cta;
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow break-inside-avoid mb-4 border border-gray-100">
@@ -33,7 +38,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
       <div className="p-4 space-y-2.5">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${EVENT_TYPE_BADGE[event.eventType]}`}>
-            {meta.emoji} {meta.label}
+            {meta.emoji} {metaLabel}
           </span>
           {event.celebrities.map((c) => (
             <span key={c} className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600">
@@ -51,7 +56,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
         <div className="space-y-1 text-xs text-gray-400 font-medium pt-0.5">
           <div className="flex items-center gap-1.5">
             <CalendarDays size={13} className="text-green-500 shrink-0" />
-            <span>{formatEventDate(event.startAt)}</span>
+            <span>{formatEventDate(event.startAt, lang)}</span>
           </div>
           {event.location && (
             <div className="flex items-center gap-1.5">
@@ -68,7 +73,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
             rel="noopener noreferrer"
             className="mt-1 flex items-center justify-center gap-1.5 w-full py-2 gradient-ningyuzhi text-green-950 font-black rounded-xl text-sm hover:scale-[1.02] transition-transform"
           >
-            {meta.cta}
+            {metaCta}
             <ExternalLink size={14} />
           </a>
         )}

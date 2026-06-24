@@ -3,15 +3,17 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, ShieldCheck, Clock, Users, Flame, CreditCard, ChevronRight, CheckCircle } from 'lucide-react';
 import { MOCK_MERCH } from '../constants';
+import { useLang } from '../contexts/LanguageContext';
 
 export const MerchDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [isOrdered, setIsOrdered] = useState(false);
-  
+
   const item = MOCK_MERCH.find(m => m.id === id);
 
-  if (!item) return <div className="py-20 text-center font-black">商品未找到</div>;
+  if (!item) return <div className="py-20 text-center font-black">{t('商品未找到', 'Product not found')}</div>;
 
   const progress = (item.currentJoined / item.targetGoal) * 100;
 
@@ -26,7 +28,7 @@ export const MerchDetail: React.FC = () => {
         onClick={() => navigate(-1)} 
         className="flex items-center gap-2 text-gray-400 hover:text-green-600 font-black transition-colors"
       >
-        <ArrowLeft size={20} /> 返回商城
+        <ArrowLeft size={20} /> {t('返回商城', 'Back to shop')}
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -49,7 +51,7 @@ export const MerchDetail: React.FC = () => {
           <div className="bg-white rounded-[3rem] p-10 border border-gray-50 shadow-sm space-y-6">
             <div className="flex items-center gap-3">
               <span className="gradient-ningyuzhi text-green-900 text-xs font-black px-4 py-1 rounded-full flex items-center gap-1">
-                <Flame size={14} className="text-red-500 fill-current" /> 拼团中 · 满{item.targetGoal}发货
+                <Flame size={14} className="text-red-500 fill-current" /> {t(`拼团中 · 满${item.targetGoal}发货`, `Group buy · ships at ${item.targetGoal}`)}
               </span>
               <span className="text-gray-300 font-bold text-xs uppercase tracking-widest">{item.category}</span>
             </div>
@@ -60,14 +62,14 @@ export const MerchDetail: React.FC = () => {
 
             <div className="flex items-end gap-10 py-6 border-y border-gray-50">
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">拼团定金</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('拼团定金', 'Deposit')}</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-xl font-black text-green-600">¥</span>
                   <span className="text-5xl font-black text-green-600">{item.deposit}</span>
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">预估全款</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('预估全款', 'Est. full price')}</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-sm font-black text-gray-500">¥</span>
                   <span className="text-2xl font-black text-gray-500">{item.price}</span>
@@ -81,8 +83,8 @@ export const MerchDetail: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Users className="text-green-700" size={24} />
                   <div>
-                    <p className="text-sm font-black text-green-950">已参与人数: {item.currentJoined}</p>
-                    <p className="text-[10px] text-green-700 font-bold">目标人数: {item.targetGoal}人</p>
+                    <p className="text-sm font-black text-green-950">{t('已参与人数: ', 'Joined: ')}{item.currentJoined}</p>
+                    <p className="text-[10px] text-green-700 font-bold">{t('目标人数: ', 'Goal: ')}{item.targetGoal}{t('人', '')}</p>
                   </div>
                 </div>
                 <span className="text-3xl font-black text-green-700">{Math.round(progress)}%</span>
@@ -94,7 +96,7 @@ export const MerchDetail: React.FC = () => {
                 />
               </div>
               <p className="text-[10px] text-gray-400 text-center font-black italic">
-                * 若拼团不成功，定金将按原路径退回
+                {t('* 若拼团不成功，定金将按原路径退回', '* If the group buy fails, deposits are refunded via the original method')}
               </p>
             </div>
 
@@ -103,7 +105,7 @@ export const MerchDetail: React.FC = () => {
                 onClick={handleOrder}
                 className="flex-grow py-6 gradient-ningyuzhi text-green-900 font-black text-2xl rounded-3xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3"
               >
-                <CreditCard size={28} /> 支付定金
+                <CreditCard size={28} /> {t('支付定金', 'Pay deposit')}
               </button>
               <button className="p-6 bg-gray-50 text-gray-400 rounded-3xl hover:bg-green-50 hover:text-green-600 transition-colors">
                 <Share2 size={28} />
@@ -113,14 +115,14 @@ export const MerchDetail: React.FC = () => {
 
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-50 shadow-sm space-y-6">
             <h3 className="font-black text-gray-900 flex items-center gap-2">
-              <ShieldCheck className="text-green-500" /> 应援站保障
+              <ShieldCheck className="text-green-500" /> {t('应援站保障', 'Support guarantee')}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                <CheckCircle size={14} className="text-green-500" /> 正品授权设计
+                <CheckCircle size={14} className="text-green-500" /> {t('正品授权设计', 'Licensed design')}
               </div>
               <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                <Clock size={14} className="text-green-500" /> 满额即刻投产
+                <Clock size={14} className="text-green-500" /> {t('满额即刻投产', 'Produced once goal met')}
               </div>
             </div>
           </div>
@@ -130,20 +132,20 @@ export const MerchDetail: React.FC = () => {
       {/* Description Area */}
       <div className="bg-white rounded-[3.5rem] p-12 border border-gray-50 shadow-sm space-y-12">
         <div className="flex border-b border-gray-50">
-          <button className="px-10 py-6 text-xl font-black border-b-4 border-green-600 text-green-700">商品详情</button>
-          <button className="px-10 py-6 text-xl font-black text-gray-300 hover:text-gray-500">成团公示</button>
+          <button className="px-10 py-6 text-xl font-black border-b-4 border-green-600 text-green-700">{t('商品详情', 'Details')}</button>
+          <button className="px-10 py-6 text-xl font-black text-gray-300 hover:text-gray-500">{t('成团公示', 'Group results')}</button>
         </div>
         <div className="prose prose-green max-w-none text-gray-600 font-medium leading-relaxed">
           <p className="text-lg">{item.description}</p>
           <div className="mt-10 space-y-10">
             <img src={item.gallery[0]} className="w-full rounded-[2.5rem] shadow-xl" />
             <div className="bg-gray-50 p-10 rounded-[2.5rem]">
-              <h4 className="text-2xl font-black text-gray-900 mb-6">拼团须知</h4>
+              <h4 className="text-2xl font-black text-gray-900 mb-6">{t('拼团须知', 'Group buy notes')}</h4>
               <ul className="space-y-4 text-sm font-bold">
-                <li>1. 本周边由粉丝自主发起，非官方出版物，仅供同好收藏。</li>
-                <li>2. 达到起做量后，我们将公示成团信息并开启尾款补缴。</li>
-                <li>3. 制作周期预计 15-30 个工作日，请耐心等待。</li>
-                <li>4. 客服咨询请前往“交流广场”置顶帖或私信管理组。</li>
+                <li>{t('1. 本周边由粉丝自主发起，非官方出版物，仅供同好收藏。', '1. Fan-initiated merch, not an official product — for collectors only.')}</li>
+                <li>{t('2. 达到起做量后，我们将公示成团信息并开启尾款补缴。', '2. Once the minimum is met, we’ll announce results and open balance payment.')}</li>
+                <li>{t('3. 制作周期预计 15-30 个工作日，请耐心等待。', '3. Production takes about 15-30 business days — thanks for your patience.')}</li>
+                <li>{t('4. 客服咨询请前往"交流广场"置顶帖或私信管理组。', '4. For support, see the pinned post in the community or DM the admins.')}</li>
               </ul>
             </div>
           </div>
@@ -157,13 +159,13 @@ export const MerchDetail: React.FC = () => {
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto">
               <CheckCircle size={56} />
             </div>
-            <h3 className="text-4xl font-black text-gray-900">定金支付成功</h3>
-            <p className="text-gray-500 font-bold text-lg italic">感谢你对宁渝枝周边的热爱！已自动为您加入拼团队列。</p>
-            <button 
+            <h3 className="text-4xl font-black text-gray-900">{t('定金支付成功', 'Deposit paid')}</h3>
+            <p className="text-gray-500 font-bold text-lg italic">{t('感谢你对宁渝枝周边的热爱！已自动为您加入拼团队列。', 'Thanks for your support! You’ve been added to the group buy queue.')}</p>
+            <button
               onClick={() => setIsOrdered(false)}
               className="px-12 py-4 gradient-ningyuzhi text-green-900 font-black rounded-2xl shadow-lg"
             >
-              确认
+              {t('确认', 'OK')}
             </button>
           </div>
         </div>

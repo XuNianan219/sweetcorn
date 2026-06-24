@@ -4,6 +4,17 @@ import { Bookmark, Copy, Globe2, Heart, ImageIcon, Link2, MessageCircleMore, Mes
 import { StorageService } from '../services/storage';
 import { Comment, PhotoItem, VideoItem } from '../types';
 import { MOCK_MERCH } from '../constants';
+import { useLang } from '../contexts/LanguageContext';
+
+// 分享平台标签英文映射
+const SHARE_EN: Record<string, { label: string; hint: string }> = {
+  wechat: { label: 'WeChat', hint: 'Send to friends' },
+  moments: { label: 'Moments', hint: 'Share status' },
+  weibo: { label: 'Weibo', hint: 'Public repost' },
+  qq: { label: 'QQ', hint: 'Send to friends' },
+  qzone: { label: 'QZone', hint: 'One-tap post' },
+  link: { label: 'Copy link', hint: 'Placeholder link' },
+};
 
 type MediaKind = 'photo' | 'video';
 type MediaCard = {
@@ -81,6 +92,7 @@ const SHARE_TARGETS: ShareTarget[] = [
 
 export const MediaCenter: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const currentUser = StorageService.getCurrentUser();
 
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -157,7 +169,7 @@ export const MediaCenter: React.FC = () => {
     const key = `${item.kind}-${item.id}`;
     const content = (commentDrafts[key] || '').trim();
     if (!content) return;
-    const newComment: Comment = { id: Date.now().toString(), author: currentUser.realName, content, timestamp: '刚刚' };
+    const newComment: Comment = { id: Date.now().toString(), author: currentUser.realName, content, timestamp: t('刚刚', 'just now') };
     if (item.kind === 'photo') {
       const target = photos.find((p) => p.id === item.id);
       if (!target) return;
@@ -182,7 +194,7 @@ export const MediaCenter: React.FC = () => {
   };
 
   const handleDelete = (item: MediaCard) => {
-    if (!window.confirm('确定删除这条内容吗？删除后会进入回收站。')) return;
+    if (!window.confirm(t('确定删除这条内容吗？删除后会进入回收站。', 'Delete this item? It will go to the recycle bin.'))) return;
     if (item.kind === 'photo') StorageService.removePhoto(item.id, currentUser.id);
     else StorageService.removeVideo(item.id, currentUser.id);
     setShowMenu(false);
@@ -203,8 +215,8 @@ export const MediaCenter: React.FC = () => {
 
   const handleFileChange = (file?: File) => {
     if (!file) return;
-    if (uploadType === 'photo' && !file.type.startsWith('image/')) return setUploadError('图片发布仅支持图片文件');
-    if (uploadType === 'video' && !file.type.startsWith('video/') && !file.type.startsWith('audio/')) return setUploadError('视频发布仅支持视频/音频文件');
+    if (uploadType === 'photo' && !file.type.startsWith('image/')) return setUploadError(t('图片发布仅支持图片文件', 'Photo posts only accept image files'));
+    if (uploadType === 'video' && !file.type.startsWith('video/') && !file.type.startsWith('audio/')) return setUploadError(t('视频发布仅支持视频/音频文件', 'Video posts only accept video/audio files'));
     setUploadError(null);
     setUploadFile(file);
     setUploadPreview(URL.createObjectURL(file));
@@ -236,7 +248,7 @@ export const MediaCenter: React.FC = () => {
   };
 
   const submitUpload = async () => {
-    if (!uploadTitle.trim() || !uploadFile || !uploadPreview) return setUploadError('请填写标题并选择文件');
+    if (!uploadTitle.trim() || !uploadFile || !uploadPreview) return setUploadError(t('请填写标题并选择文件', 'Enter a title and choose a file'));
     setIsUploading(true);
     await new Promise((r) => setTimeout(r, 400));
     const tags = uploadTags
@@ -245,9 +257,9 @@ export const MediaCenter: React.FC = () => {
       .filter(Boolean)
       .map((t) => (t.startsWith('#') ? t : `#${t}`));
     if (uploadType === 'photo') {
-      StorageService.savePhoto({ id: Date.now().toString(), creatorId: currentUser.id, title: uploadTitle.trim(), url: uploadPreview, author: currentUser.realName, likes: 0, tags: tags.length ? tags : ['#图片'], commentsList: [] });
+      StorageService.savePhoto({ id: Date.now().toString(), creatorId: currentUser.id, title: uploadTitle.trim(), url: uploadPreview, author: currentUser.realName, likes: 0, tags: tags.length ? tags : [t('#图片', '#photo')], commentsList: [] });
     } else {
-      StorageService.saveVideo({ id: Date.now().toString(), creatorId: currentUser.id, title: uploadTitle.trim(), author: currentUser.realName, likes: 0, comments: 0, cover: uploadPreview, mediaUrl: uploadPreview, tags: tags.length ? tags : ['#视频'], commentsList: [], merchId: uploadMerchId || undefined });
+      StorageService.saveVideo({ id: Date.now().toString(), creatorId: currentUser.id, title: uploadTitle.trim(), author: currentUser.realName, likes: 0, comments: 0, cover: uploadPreview, mediaUrl: uploadPreview, tags: tags.length ? tags : [t('#视频', '#video')], commentsList: [], merchId: uploadMerchId || undefined });
     }
     resetUpload();
     load();
@@ -258,16 +270,16 @@ export const MediaCenter: React.FC = () => {
       <div className="bg-white rounded-[2.5rem] p-8 border border-green-50 shadow-sm space-y-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:justify-between">
           <div>
-            <h1 className="text-2xl md:text-4xl font-black text-green-950">嗑学影像</h1>
-            <p className="text-sm text-gray-400 mt-1">图片和视频统一发布，支持标签搜索</p>
+            <h1 className="text-2xl md:text-4xl font-black text-green-950">{t('嗑学影像', 'Media')}</h1>
+            <p className="text-sm text-gray-400 mt-1">{t('图片和视频统一发布，支持标签搜索', 'Post photos and videos together, searchable by tag')}</p>
           </div>
           <button onClick={() => setShowUploadModal(true)} className="px-8 py-4 gradient-redsea text-white font-black rounded-2xl">
-            发布内容
+            {t('发布内容', 'Post')}
           </button>
         </div>
         <div className="relative">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300" size={22} />
-          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchTerm.trim().startsWith('#') && navigate(`/tags/${encodeURIComponent(searchTerm.trim().replace('#', ''))}`)} placeholder="搜索关键词或 #话题" className="w-full pl-16 pr-6 py-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-4 focus:ring-green-100 font-medium" />
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchTerm.trim().startsWith('#') && navigate(`/tags/${encodeURIComponent(searchTerm.trim().replace('#', ''))}`)} placeholder={t('搜索关键词或 #话题', 'Search keywords or #tags')} className="w-full pl-16 pr-6 py-4 bg-gray-50 rounded-2xl outline-none border-none focus:ring-4 focus:ring-green-100 font-medium" />
         </div>
       </div>
 
@@ -287,7 +299,7 @@ export const MediaCenter: React.FC = () => {
                   )}
                   <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-black bg-black/60 text-white flex items-center gap-1">
                     {item.kind === 'video' ? <Play size={12} /> : <ImageIcon size={12} />}
-                    {item.kind === 'video' ? '视频' : '图片'}
+                    {item.kind === 'video' ? t('视频', 'Video') : t('图片', 'Photo')}
                   </div>
                   <button onClick={() => { setMenuItem(item); setShowMenu(true); }} className="absolute top-3 right-3 p-2 rounded-full bg-black/45 text-white">
                     <MoreHorizontal size={15} />
@@ -304,7 +316,7 @@ export const MediaCenter: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500 font-bold">@{item.author}</span>
-                    {savedIds.has(key) && <span className="text-[11px] text-green-700 font-black bg-green-50 px-2 py-1 rounded-md">已保存</span>}
+                    {savedIds.has(key) && <span className="text-[11px] text-green-700 font-black bg-green-50 px-2 py-1 rounded-md">{t('已保存', 'Saved')}</span>}
                   </div>
                   <div className="flex items-center gap-5 text-gray-500">
                     <button onClick={() => handleLike(item)} className={`flex items-center gap-1 ${likedIds.has(key) ? 'text-red-500' : 'hover:text-red-500'}`}>
@@ -317,7 +329,7 @@ export const MediaCenter: React.FC = () => {
                     </button>
                     <button onClick={() => handleRepost(item)} className="flex items-center gap-1 hover:text-green-600">
                       <Repeat2 size={17} />
-                      <span className="text-xs font-black">转发</span>
+                      <span className="text-xs font-black">{t('转发', 'Repost')}</span>
                     </button>
                   </div>
                   {activeCommentId === key && (
@@ -331,7 +343,7 @@ export const MediaCenter: React.FC = () => {
                         ))}
                       </div>
                       <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-2 pr-3">
-                        <input value={commentDrafts[key] || ''} onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [key]: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && handleComment(item)} placeholder="写评论..." className="flex-grow bg-transparent outline-none text-xs" />
+                        <input value={commentDrafts[key] || ''} onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [key]: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && handleComment(item)} placeholder={t('写评论...', 'Write a comment...')} className="flex-grow bg-transparent outline-none text-xs" />
                         <button onClick={() => handleComment(item)} className="text-green-700">
                           <Send size={16} />
                         </button>
@@ -345,10 +357,10 @@ export const MediaCenter: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white rounded-[2rem] border border-gray-100 py-20 px-8 text-center space-y-4">
-          <p className="text-2xl font-black text-gray-700">没有找到匹配内容</p>
-          <p className="text-sm text-gray-400">试试换关键词，或输入 #话题 回车跳转</p>
+          <p className="text-2xl font-black text-gray-700">{t('没有找到匹配内容', 'No matching content')}</p>
+          <p className="text-sm text-gray-400">{t('试试换关键词，或输入 #话题 回车跳转', 'Try other keywords, or enter #tag and press Enter')}</p>
           <button onClick={() => setSearchTerm('')} className="px-6 py-2 rounded-xl bg-green-50 text-green-700 text-sm font-black">
-            清空搜索
+            {t('清空搜索', 'Clear search')}
           </button>
         </div>
       )}
@@ -359,20 +371,20 @@ export const MediaCenter: React.FC = () => {
             <button onClick={resetUpload} className="absolute top-6 right-6 text-gray-400 hover:text-red-500">
               <X size={28} />
             </button>
-            <h2 className="text-3xl font-black text-gray-900">发布内容</h2>
+            <h2 className="text-3xl font-black text-gray-900">{t('发布内容', 'Post content')}</h2>
             <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1.5 rounded-2xl">
               <button onClick={() => setUploadType('photo')} className={`py-3 rounded-xl font-black ${uploadType === 'photo' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}>
-                图片
+                {t('图片', 'Photo')}
               </button>
               <button onClick={() => setUploadType('video')} className={`py-3 rounded-xl font-black ${uploadType === 'video' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}>
-                视频
+                {t('视频', 'Video')}
               </button>
             </div>
-            <input value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} placeholder="输入标题" className="w-full p-4 rounded-2xl bg-gray-50 outline-none border-none focus:ring-4 focus:ring-green-100" />
-            <input value={uploadTags} onChange={(e) => setUploadTags(e.target.value)} placeholder="输入话题标签，空格分隔" className="w-full p-4 rounded-2xl bg-gray-50 outline-none border-none focus:ring-4 focus:ring-green-100" />
+            <input value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} placeholder={t('输入标题', 'Enter a title')} className="w-full p-4 rounded-2xl bg-gray-50 outline-none border-none focus:ring-4 focus:ring-green-100" />
+            <input value={uploadTags} onChange={(e) => setUploadTags(e.target.value)} placeholder={t('输入话题标签，空格分隔', 'Enter tags, separated by spaces')} className="w-full p-4 rounded-2xl bg-gray-50 outline-none border-none focus:ring-4 focus:ring-green-100" />
             {uploadType === 'video' && (
               <select value={uploadMerchId} onChange={(e) => setUploadMerchId(e.target.value)} className="w-full p-4 rounded-2xl bg-gray-50 outline-none border-none focus:ring-4 focus:ring-green-100">
-                <option value="">不关联周边</option>
+                <option value="">{t('不关联周边', 'No linked merch')}</option>
                 {MOCK_MERCH.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.title}
@@ -381,7 +393,7 @@ export const MediaCenter: React.FC = () => {
               </select>
             )}
             <button onClick={() => fileInputRef.current?.click()} className="w-full p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:border-green-200 bg-gray-50">
-              <div className="text-gray-400 font-bold">{uploadFile ? uploadFile.name : uploadType === 'photo' ? '选择图片文件（支持 Ctrl+V 粘贴）' : '选择视频/音频文件'}</div>
+              <div className="text-gray-400 font-bold">{uploadFile ? uploadFile.name : uploadType === 'photo' ? t('选择图片文件（支持 Ctrl+V 粘贴）', 'Choose an image (Ctrl+V paste supported)') : t('选择视频/音频文件', 'Choose a video/audio file')}</div>
               <input ref={fileInputRef} type="file" accept={uploadType === 'photo' ? 'image/*' : 'video/*,audio/*'} className="hidden" onChange={(e) => handleFileChange(e.target.files?.[0])} />
             </button>
             {uploadType === 'photo' && uploadPreview && (
@@ -391,7 +403,7 @@ export const MediaCenter: React.FC = () => {
             )}
             {uploadError && <div className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 p-3 rounded-xl">{uploadError}</div>}
             <button onClick={submitUpload} disabled={isUploading} className="w-full py-4 gradient-redsea text-white rounded-2xl font-black disabled:opacity-60">
-              {isUploading ? '发布中...' : '确认发布'}
+              {isUploading ? t('发布中...', 'Posting...') : t('确认发布', 'Post')}
             </button>
           </div>
         </div>
@@ -405,21 +417,21 @@ export const MediaCenter: React.FC = () => {
               <>
                 <button onClick={() => handleDelete(menuItem)} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-50 font-bold text-red-600 text-left">
                   <X size={16} />
-                  删除（进回收站）
+                  {t('删除（进回收站）', 'Delete (to recycle bin)')}
                 </button>
                 <button onClick={() => handleSave(menuItem)} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-left">
                   <Bookmark size={16} />
-                  {savedIds.has(`${menuItem.kind}-${menuItem.id}`) ? '取消保存' : '保存'}
+                  {savedIds.has(`${menuItem.kind}-${menuItem.id}`) ? t('取消保存', 'Unsave') : t('保存', 'Save')}
                 </button>
                 <button onClick={() => handleRepost(menuItem)} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-left">
                   <Repeat2 size={16} />
-                  转发
+                  {t('转发', 'Repost')}
                 </button>
               </>
             ) : (
               <button onClick={() => handleDislike(menuItem)} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-left">
                 <X size={16} />
-                不喜欢
+                {t('不喜欢', 'Not interested')}
               </button>
             )}
           </div>
@@ -443,7 +455,7 @@ export const MediaCenter: React.FC = () => {
                     SHARE
                   </div>
                   <h3 className="text-xl font-black text-gray-900 md:text-2xl">{shareItem.title}</h3>
-                  <p className="text-sm font-medium text-gray-500">仿照短视频平台的转发面板。现在先接假链接，后续你可以把每个平台链接替换成真实地址。</p>
+                  <p className="text-sm font-medium text-gray-500">{t('仿照短视频平台的转发面板。现在先接假链接，后续你可以把每个平台链接替换成真实地址。', 'A share panel modeled on short-video apps. It uses placeholder links for now — replace each with a real URL later.')}</p>
                 </div>
               </div>
             </div>
@@ -451,11 +463,11 @@ export const MediaCenter: React.FC = () => {
             <div className="bg-white px-6 py-6 md:px-8">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <p className="text-base font-black text-gray-900">分享到</p>
-                  <p className="text-xs text-gray-400">点击图标会打开对应的占位网站</p>
+                  <p className="text-base font-black text-gray-900">{t('分享到', 'Share to')}</p>
+                  <p className="text-xs text-gray-400">{t('点击图标会打开对应的占位网站', 'Tapping an icon opens its placeholder site')}</p>
                 </div>
                 <div className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-black text-gray-500">
-                  当前为演示版
+                  {t('当前为演示版', 'Demo version')}
                 </div>
               </div>
 
@@ -465,8 +477,8 @@ export const MediaCenter: React.FC = () => {
                     <span className={`flex h-14 w-14 items-center justify-center rounded-[1.25rem] shadow-sm ${target.bgClass}`}>
                       {target.icon}
                     </span>
-                    <span className="text-sm font-black text-gray-900">{target.label}</span>
-                    <span className="text-[11px] text-gray-400">{target.hint}</span>
+                    <span className="text-sm font-black text-gray-900">{t(target.label, SHARE_EN[target.id]?.label ?? target.label)}</span>
+                    <span className="text-[11px] text-gray-400">{t(target.hint, SHARE_EN[target.id]?.hint ?? target.hint)}</span>
                   </button>
                 ))}
               </div>
@@ -474,7 +486,7 @@ export const MediaCenter: React.FC = () => {
               <div className="mt-6 rounded-[1.5rem] border border-[#f1e8d8] bg-[#fffaf0] p-4">
                 <div className="flex items-center gap-2 text-sm font-black text-gray-800">
                   <Link2 size={16} />
-                  占位链接预览
+                  {t('占位链接预览', 'Placeholder link preview')}
                 </div>
                 <div className="mt-2 break-all text-xs text-gray-500">
                   https://example.com/mock-share/wechat?title={encodeURIComponent(shareItem.title)}&id={encodeURIComponent(shareItem.id)}

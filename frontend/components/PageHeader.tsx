@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useLang } from '../contexts/LanguageContext';
 
 interface PageHeaderProps {
   title?: string;
@@ -12,6 +13,7 @@ interface PageHeaderProps {
 // 通用二级页面头：左上角返回按钮（桌面端也显示，视觉低调）
 const PageHeader: React.FC<PageHeaderProps> = ({ title, showBack = true, onBack, rightSlot }) => {
   const navigate = useNavigate();
+  const { t } = useLang();
 
   const handleBack = useCallback(() => {
     if (onBack) {
@@ -33,7 +35,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, showBack = true, onBack,
           <button
             type="button"
             onClick={handleBack}
-            aria-label="返回上一页"
+            aria-label={t('返回上一页', 'Go back')}
             className="shrink-0 p-1.5 -ml-1.5 rounded-full"
           >
             <span className="w-10 h-10 md:w-9 md:h-9 rounded-full bg-yellow-50 hover:bg-yellow-100 text-green-800 flex items-center justify-center transition-all hover:shadow-sm cursor-pointer">
@@ -42,7 +44,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, showBack = true, onBack,
           </button>
         )}
         {title ? (
-          <h1 className="flex-grow min-w-0 truncate text-lg font-black text-green-950">{title}</h1>
+          <h1 className="flex-grow min-w-0 truncate text-base md:text-lg font-black text-green-950">{title}</h1>
         ) : (
           <div className="flex-grow" />
         )}

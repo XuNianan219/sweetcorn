@@ -25,11 +25,19 @@ import {
   rejectEvent,
   type EventItem,
   EVENT_TYPE_META,
+  EVENT_TYPE_META_EN,
   formatEventDate,
 } from '../services/eventsService';
 import { useCurrentUser } from '../contexts/UserContext';
+import { useLang } from '../contexts/LanguageContext';
+import {
+  getPendingIdeas,
+  approveIdea,
+  rejectIdea,
+  type Idea,
+} from '../services/merchandiseService';
 
-type AdminTab = 'users' | 'events';
+type AdminTab = 'users' | 'events' | 'ideas';
 
 const PAGE_SIZE = 20;
 
@@ -37,6 +45,11 @@ const ROLE_LABEL: Record<string, string> = {
   user: '会员',
   admin: '管理员',
   super_admin: '超级管理员',
+};
+const ROLE_LABEL_EN: Record<string, string> = {
+  user: 'Member',
+  admin: 'Admin',
+  super_admin: 'Super Admin',
 };
 
 function formatDate(iso?: string): string {
@@ -49,6 +62,7 @@ function formatDate(iso?: string): string {
 export const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useCurrentUser();
+  const { t, lang } = useLang();
   const isSuperAdmin = user?.role === 'super_admin';
 
   const [tab, setTab] = useState<AdminTab>('users');
@@ -64,7 +78,12 @@ export const Admin: React.FC = () => {
   const [pending, setPending] = useState<EventItem[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectKind, setRejectKind] = useState<'event' | 'idea'>('event');
   const [rejectReason, setRejectReason] = useState('');
+
+  // 待审核创意
+  const [pendingIdeas, setPendingIdeas] = useState<Idea[]>([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -77,7 +96,7 @@ export const Admin: React.FC = () => {
         setTotal(res.total);
         setPage(res.page);
       })
-      .catch((e) => setError(e?.message || '加载失败'))
+      .catch((e) => setError(e?.message || t('加载失败', 'Failed to load')))
       .finally(() => setLoading(false));
   };
 
@@ -93,13 +112,13 @@ export const Admin: React.FC = () => {
         <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-400 mx-auto flex items-center justify-center">
           <Ban size={32} />
         </div>
-        <h1 className="text-2xl font-black text-gray-800">无权限访问</h1>
-        <p className="text-gray-500 font-medium">该页面仅限管理员访问</p>
+        <h1 className="text-2xl font-black text-gray-800">{t('无权限访问', 'No access')}</h1>
+        <p className="text-gray-500 font-medium">{t('该页面仅限管理员访问', 'This page is for admins only')}</p>
         <button
           onClick={() => navigate('/')}
           className="px-6 py-3 gradient-ningyuzhi text-green-950 font-black rounded-2xl"
         >
-          返回首页
+          {t('返回首页', 'Back home')}
         </button>
       </div>
     );
@@ -116,7 +135,7 @@ export const Admin: React.FC = () => {
     try {
       patchLocal(await adminSetStatus(u.id, next));
     } catch (e: any) {
-      setError(e?.message || '操作失败');
+      setError(e?.message || t('操作失败', 'Action failed'));
     } finally {
       setBusyId(null);
     }
@@ -128,7 +147,7 @@ export const Admin: React.FC = () => {
     try {
       patchLocal(await adminSetRole(u.id, role));
     } catch (e: any) {
-      setError(e?.message || '操作失败');
+      setError(e?.message || t('操作失败', 'Action failed'));
     } finally {
       setBusyId(null);
     }
@@ -140,7 +159,7 @@ export const Admin: React.FC = () => {
     setError('');
     getPendingEvents()
       .then(setPending)
-      .catch((e) => setError(e?.message || '加载失败'))
+      .catch((e) => setError(e?.message || t('加载失败', 'Failed to load')))
       .finally(() => setPendingLoading(false));
   };
 
@@ -148,6 +167,34 @@ export const Admin: React.FC = () => {
     if (isAdmin && tab === 'events') loadPending();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, tab]);
+
+  // ─── 创意审核 ───
+  const loadPendingIdeas = () => {
+    setIdeasLoading(true);
+    setError('');
+    getPendingIdeas()
+      .then(setPendingIdeas)
+      .catch((e) => setError(e?.message || t('加载失败', 'Failed to load')))
+      .finally(() => setIdeasLoading(false));
+  };
+
+  useEffect(() => {
+    if (isAdmin && tab === 'ideas') loadPendingIdeas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, tab]);
+
+  const handleApproveIdea = async (idea: Idea) => {
+    setBusyId(idea.id);
+    setError('');
+    try {
+      await approveIdea(idea.id);
+      setPendingIdeas((prev) => prev.filter((i) => i.id !== idea.id));
+    } catch (e: any) {
+      setError(e?.message || t('操作失败', 'Action failed'));
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const removeFromPending = (id: string) => setPending((prev) => prev.filter((e) => e.id !== id));
 
@@ -158,7 +205,7 @@ export const Admin: React.FC = () => {
       await approveEvent(ev.id);
       removeFromPending(ev.id);
     } catch (e: any) {
-      setError(e?.message || '操作失败');
+      setError(e?.message || t('操作失败', 'Action failed'));
     } finally {
       setBusyId(null);
     }
@@ -171,7 +218,7 @@ export const Admin: React.FC = () => {
       const updated = await pinEvent(ev.id, !ev.isPinned);
       setPending((prev) => prev.map((e) => (e.id === ev.id ? { ...e, isPinned: updated.isPinned } : e)));
     } catch (e: any) {
-      setError(e?.message || '操作失败');
+      setError(e?.message || t('操作失败', 'Action failed'));
     } finally {
       setBusyId(null);
     }
@@ -182,15 +229,25 @@ export const Admin: React.FC = () => {
     setBusyId(rejectingId);
     setError('');
     try {
-      await rejectEvent(rejectingId, rejectReason.trim());
-      removeFromPending(rejectingId);
+      if (rejectKind === 'idea') {
+        await rejectIdea(rejectingId, rejectReason.trim());
+        setPendingIdeas((prev) => prev.filter((i) => i.id !== rejectingId));
+      } else {
+        await rejectEvent(rejectingId, rejectReason.trim());
+        removeFromPending(rejectingId);
+      }
       setRejectingId(null);
       setRejectReason('');
     } catch (e: any) {
-      setError(e?.message || '操作失败');
+      setError(e?.message || t('操作失败', 'Action failed'));
     } finally {
       setBusyId(null);
     }
+  };
+
+  const openReject = (id: string, kind: 'event' | 'idea') => {
+    setRejectKind(kind);
+    setRejectingId(id);
   };
 
   return (
@@ -201,8 +258,8 @@ export const Admin: React.FC = () => {
           <ShieldCheck size={24} />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-green-950">管理员后台</h1>
-          <p className="text-sm text-gray-400 font-medium">仅管理员可见</p>
+          <h1 className="text-2xl font-black text-green-950">{t('管理员后台', 'Admin Panel')}</h1>
+          <p className="text-sm text-gray-400 font-medium">{t('仅管理员可见', 'Visible to admins only')}</p>
         </div>
       </div>
 
@@ -215,7 +272,7 @@ export const Admin: React.FC = () => {
           }`}
         >
           <UsersIcon size={15} />
-          用户管理
+          {t('用户管理', 'Users')}
         </button>
         <button
           onClick={() => setTab('events')}
@@ -224,10 +281,24 @@ export const Admin: React.FC = () => {
           }`}
         >
           <CheckCircle2 size={15} />
-          待审核活动
+          {t('待审核活动', 'Pending events')}
           {pending.length > 0 && (
             <span className="px-1.5 py-0.5 bg-green-600 text-white rounded-full text-[10px] leading-none">
               {pending.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('ideas')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${
+            tab === 'ideas' ? 'gradient-ningyuzhi text-green-950 shadow-sm' : 'bg-white text-gray-500 border border-green-50 hover:text-green-600'
+          }`}
+        >
+          <CheckCircle2 size={15} />
+          {t('待审核创意', 'Pending ideas')}
+          {pendingIdeas.length > 0 && (
+            <span className="px-1.5 py-0.5 bg-green-600 text-white rounded-full text-[10px] leading-none">
+              {pendingIdeas.length}
             </span>
           )}
         </button>
@@ -249,12 +320,12 @@ export const Admin: React.FC = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-400 border-b border-gray-100">
-                  <th className="px-4 py-3 font-bold">用户</th>
-                  <th className="px-4 py-3 font-bold">手机号</th>
-                  <th className="px-4 py-3 font-bold">角色</th>
-                  <th className="px-4 py-3 font-bold">状态</th>
-                  <th className="px-4 py-3 font-bold">注册时间</th>
-                  <th className="px-4 py-3 font-bold">操作</th>
+                  <th className="px-4 py-3 font-bold">{t('用户', 'User')}</th>
+                  <th className="px-4 py-3 font-bold">{t('手机号', 'Phone')}</th>
+                  <th className="px-4 py-3 font-bold">{t('角色', 'Role')}</th>
+                  <th className="px-4 py-3 font-bold">{t('状态', 'Status')}</th>
+                  <th className="px-4 py-3 font-bold">{t('注册时间', 'Joined')}</th>
+                  <th className="px-4 py-3 font-bold">{t('操作', 'Action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,7 +344,7 @@ export const Admin: React.FC = () => {
                             )}
                           </div>
                           <span className="font-bold text-gray-800 whitespace-nowrap">
-                            {u.nickname || '未命名'}
+                            {u.nickname || t('未命名', 'Unnamed')}
                           </span>
                         </div>
                       </td>
@@ -286,12 +357,12 @@ export const Admin: React.FC = () => {
                             onChange={(e) => handleChangeRole(u, e.target.value as ApiUser['role'])}
                             className="text-xs font-bold bg-gray-50 border border-green-100 rounded-lg px-2 py-1.5 text-green-700 outline-none disabled:opacity-50"
                           >
-                            <option value="user">会员</option>
-                            <option value="admin">管理员</option>
-                            <option value="super_admin">超级管理员</option>
+                            <option value="user">{t('会员', 'Member')}</option>
+                            <option value="admin">{t('管理员', 'Admin')}</option>
+                            <option value="super_admin">{t('超级管理员', 'Super Admin')}</option>
                           </select>
                         ) : (
-                          <span className="text-xs font-bold text-gray-700">{ROLE_LABEL[u.role]}</span>
+                          <span className="text-xs font-bold text-gray-700">{lang === 'en' ? ROLE_LABEL_EN[u.role] : ROLE_LABEL[u.role]}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -300,7 +371,7 @@ export const Admin: React.FC = () => {
                             banned ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
                           }`}
                         >
-                          {banned ? '已封禁' : '正常'}
+                          {banned ? t('已封禁', 'Banned') : t('正常', 'Active')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(u.createdAt)}</td>
@@ -321,7 +392,7 @@ export const Admin: React.FC = () => {
                           ) : (
                             <Ban size={14} />
                           )}
-                          {banned ? '解封' : '封禁'}
+                          {banned ? t('解封', 'Unban') : t('封禁', 'Ban')}
                         </button>
                       </td>
                     </tr>
@@ -341,7 +412,7 @@ export const Admin: React.FC = () => {
           className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-green-50 font-bold text-sm text-gray-600 disabled:opacity-40 hover:bg-green-50 transition-colors"
         >
           <ChevronLeft size={16} />
-          上一页
+          {t('上一页', 'Prev')}
         </button>
         <span className="text-sm font-bold text-gray-500">
           {page} / {totalPages}
@@ -351,7 +422,7 @@ export const Admin: React.FC = () => {
           disabled={page >= totalPages || loading}
           className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-green-50 font-bold text-sm text-gray-600 disabled:opacity-40 hover:bg-green-50 transition-colors"
         >
-          下一页
+          {t('下一页', 'Next')}
           <ChevronRight size={16} />
         </button>
       </div>
@@ -367,11 +438,12 @@ export const Admin: React.FC = () => {
             </div>
           ) : pending.length === 0 ? (
             <div className="bg-white rounded-[2rem] border border-green-50 shadow-sm text-center py-16 text-gray-400 font-medium">
-              暂无待审核活动
+              {t('暂无待审核活动', 'No pending events')}
             </div>
           ) : (
             pending.map((ev) => {
               const meta = EVENT_TYPE_META[ev.eventType];
+              const metaLabel = lang === 'en' ? EVENT_TYPE_META_EN[ev.eventType].label : meta.label;
               const busy = busyId === ev.id;
               return (
                 <div key={ev.id} className="bg-white rounded-[2rem] border border-green-50 shadow-sm p-5 flex flex-col sm:flex-row gap-4">
@@ -386,10 +458,10 @@ export const Admin: React.FC = () => {
                   <div className="flex-grow min-w-0 space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-green-100 text-green-700">
-                        {meta.emoji} {meta.label}
+                        {meta.emoji} {metaLabel}
                       </span>
                       {ev.isPinned && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-black bg-yellow-100 text-yellow-700">已置顶</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-black bg-yellow-100 text-yellow-700">{t('已置顶', 'Pinned')}</span>
                       )}
                       {ev.celebrities.map((c) => (
                         <span key={c} className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600">{c}</span>
@@ -398,9 +470,9 @@ export const Admin: React.FC = () => {
                     <h3 className="font-black text-gray-900">{ev.title}</h3>
                     {ev.description && <p className="text-sm text-gray-500 font-medium line-clamp-2">{ev.description}</p>}
                     <p className="text-xs text-gray-400 font-medium">
-                      {formatEventDate(ev.startAt)}
+                      {formatEventDate(ev.startAt, lang)}
                       {ev.location ? ` · ${ev.location}` : ''}
-                      {ev.submitter ? ` · 提交人 ${ev.submitter.nickname || ev.submitter.phone}` : ''}
+                      {ev.submitter ? ` · ${t('提交人', 'by')} ${ev.submitter.nickname || ev.submitter.phone}` : ''}
                     </p>
 
                     <div className="flex flex-wrap gap-2 pt-1">
@@ -410,15 +482,15 @@ export const Admin: React.FC = () => {
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black gradient-ningyuzhi text-green-950 disabled:opacity-50"
                       >
                         {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                        通过
+                        {t('通过', 'Approve')}
                       </button>
                       <button
-                        onClick={() => setRejectingId(ev.id)}
+                        onClick={() => openReject(ev.id, 'event')}
                         disabled={busy}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
                       >
                         <Ban size={14} />
-                        拒绝
+                        {t('拒绝', 'Reject')}
                       </button>
                       <button
                         onClick={() => handlePin(ev)}
@@ -426,7 +498,62 @@ export const Admin: React.FC = () => {
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50"
                       >
                         <Pin size={14} />
-                        {ev.isPinned ? '取消置顶' : '置顶'}
+                        {ev.isPinned ? t('取消置顶', 'Unpin') : t('置顶', 'Pin')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ───── 待审核创意 ───── */}
+      {tab === 'ideas' && (
+        <div className="space-y-4">
+          {ideasLoading ? (
+            <div className="flex justify-center py-16 text-gray-400">
+              <Loader2 size={28} className="animate-spin" />
+            </div>
+          ) : pendingIdeas.length === 0 ? (
+            <div className="bg-white rounded-[2rem] border border-green-50 shadow-sm text-center py-16 text-gray-400 font-medium">
+              {t('暂无待审核创意', 'No pending ideas')}
+            </div>
+          ) : (
+            pendingIdeas.map((idea) => {
+              const busy = busyId === idea.id;
+              const cover = idea.designImages?.[0];
+              return (
+                <div key={idea.id} className="bg-white rounded-[2rem] border border-green-50 shadow-sm p-5 flex flex-col sm:flex-row gap-4">
+                  {cover ? (
+                    <img src={cover} alt={idea.name} className="w-full sm:w-36 h-28 object-cover rounded-xl shrink-0" />
+                  ) : (
+                    <div className="w-full sm:w-36 h-28 gradient-ningyuzhi rounded-xl flex items-center justify-center text-3xl shrink-0">💡</div>
+                  )}
+                  <div className="flex-grow min-w-0 space-y-1.5">
+                    <h3 className="font-black text-gray-900">{idea.name}</h3>
+                    {idea.description && <p className="text-sm text-gray-500 font-medium line-clamp-2">{idea.description}</p>}
+                    <p className="text-xs text-gray-400 font-medium">
+                      {t('目标', 'Goal')} {idea.targetPeople} {t('人', '')} · {t('预估', 'Est.')} ¥{idea.estimatedCost}
+                      {idea.author ? ` · ${t('提交人', 'by')} ${idea.author.nickname || idea.author.phone || ''}` : ''}
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        onClick={() => handleApproveIdea(idea)}
+                        disabled={busy}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black gradient-ningyuzhi text-green-950 disabled:opacity-50"
+                      >
+                        {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                        {t('通过并上架众筹', 'Approve & list')}
+                      </button>
+                      <button
+                        onClick={() => openReject(idea.id, 'idea')}
+                        disabled={busy}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        <Ban size={14} />
+                        {t('拒绝', 'Reject')}
                       </button>
                     </div>
                   </div>
@@ -450,7 +577,7 @@ export const Admin: React.FC = () => {
         >
           <div className="bg-white rounded-[2rem] shadow-2xl border border-green-50 p-6 w-full max-w-md space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-green-950">拒绝原因</h3>
+              <h3 className="text-lg font-black text-green-950">{t('拒绝原因', 'Rejection reason')}</h3>
               <button
                 onClick={() => {
                   setRejectingId(null);
@@ -464,7 +591,7 @@ export const Admin: React.FC = () => {
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="请填写拒绝原因，提交人可在「我提交的」中看到"
+              placeholder={t('请填写拒绝原因，提交人可在「我提交的」中看到', 'Enter a reason — the submitter can see it under "My submissions"')}
               className="w-full h-28 p-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-green-100 outline-none resize-none font-medium"
             />
             <div className="flex gap-3">
@@ -475,7 +602,7 @@ export const Admin: React.FC = () => {
                 }}
                 className="flex-1 py-3 rounded-2xl bg-gray-50 text-gray-500 font-black hover:bg-gray-100"
               >
-                取消
+                {t('取消', 'Cancel')}
               </button>
               <button
                 onClick={confirmReject}
@@ -483,7 +610,7 @@ export const Admin: React.FC = () => {
                 className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-black hover:bg-red-600 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {busyId === rejectingId && <Loader2 size={16} className="animate-spin" />}
-                确认拒绝
+                {t('确认拒绝', 'Confirm reject')}
               </button>
             </div>
           </div>

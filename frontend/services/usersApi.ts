@@ -11,6 +11,7 @@ export interface ApiUser {
   phone: string;
   nickname: string | null;
   avatarUrl: string | null;
+  bio?: string;
   role: 'user' | 'admin' | 'super_admin';
   status?: 'active' | 'banned';
   createdAt?: string;
@@ -21,7 +22,7 @@ export async function getMe(): Promise<ApiUser> {
   return apiFetch(`${BASE_URL}/users/me`);
 }
 
-export async function updateMe(data: { nickname?: string; avatarUrl?: string }): Promise<ApiUser> {
+export async function updateMe(data: { nickname?: string; avatarUrl?: string; bio?: string }): Promise<ApiUser> {
   return apiFetch(`${BASE_URL}/users/me`, { method: 'PUT', body: data });
 }
 

@@ -67,8 +67,10 @@ async function updateMeHandler(req, res, next) {
   try {
     const nickname = normalizeOptionalString(req.body.nickname);
     const avatarUrl = normalizeOptionalString(req.body.avatarUrl);
+    // bio 允许置空（清空个性签名），所以单独处理：传了 string 就用（trim），否则不动
+    const bio = typeof req.body.bio === 'string' ? req.body.bio.trim().slice(0, 100) : undefined;
 
-    const user = await updateMyProfile(req.user.userId, { nickname, avatarUrl });
+    const user = await updateMyProfile(req.user.userId, { nickname, avatarUrl, bio });
     res.json(serializeUser(user));
   } catch (error) {
     next(error);
