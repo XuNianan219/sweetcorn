@@ -1,9 +1,18 @@
 /**
  * 后端 API 基础地址 —— 智能动态发现
  * - 优先用环境变量 VITE_API_BASE_URL（生产部署时配置）
- * - 否则按当前访问域名 + 探测 3000~3009 端口自动发现后端
- * - 发现失败兜底到 :3000（不崩溃）
+ * - 否则按当前访问域名 + 探测后端端口段自动发现后端
+ * - 发现失败兜底到段首端口（不崩溃）
+ *
+ * 端口约定（前后端分家，避免互相抢占导致探测错乱）：
+ * - 前端 Vite dev server 用 2004（见 vite.config.ts）
+ * - 后端用 4000 段（见 backend/.env PORT=4000，被占则自动 +1）
+ * 探测只扫后端段，永远扫不到前端，从源头杜绝“探到 Vite 端口”的 bug。
  */
+
+// 后端端口段：与 backend/server.js 的自动 +1 上限保持一致
+const BACKEND_PORT_START = 4000;
+const BACKEND_PORT_END = 4009;
 
 let cachedApiBase: string | null = null;
 let discoveryPromise: Promise<string> | null = null;
@@ -11,9 +20,9 @@ let discoveryPromise: Promise<string> | null = null;
 function fallbackBase(): string {
   if (typeof window !== 'undefined' && window.location) {
     const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:3000`;
+    return `${protocol}//${hostname}:${BACKEND_PORT_START}`;
   }
-  return 'http://localhost:3000';
+  return `http://localhost:${BACKEND_PORT_START}`;
 }
 
 async function probePort(hostname: string, port: number): Promise<boolean> {
@@ -26,7 +35,11 @@ async function probePort(hostname: string, port: number): Promise<boolean> {
       method: 'GET',
     });
     clearTimeout(timeoutId);
-    return res.ok;
+    if (!res.ok) return false;
+    // 必须是真后端的健康 JSON（{status:'ok'}）。Vite dev server 对任意路径都回
+    // 200+HTML，只看 res.ok 会被它骗过，导致把前端端口误判成后端端口。
+    const data = await res.json().catch(() => null);
+    return !!data && data.status === 'ok';
   } catch {
     return false;
   }
@@ -44,14 +57,14 @@ export async function discoverApiBase(): Promise<string> {
     }
 
     if (typeof window === 'undefined' || !window.location) {
-      cachedApiBase = 'http://localhost:3000';
+      cachedApiBase = `http://localhost:${BACKEND_PORT_START}`;
       return cachedApiBase;
     }
 
     const { protocol, hostname } = window.location;
 
-    // 探测 3000~3009
-    for (let port = 3000; port <= 3009; port++) {
+    // 只探测后端端口段（4000~4009）
+    for (let port = BACKEND_PORT_START; port <= BACKEND_PORT_END; port++) {
       // eslint-disable-next-line no-await-in-loop
       const ok = await probePort(hostname, port);
       if (ok) {

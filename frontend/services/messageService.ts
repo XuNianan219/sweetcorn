@@ -60,3 +60,15 @@ export async function getMessageUnreadCount(): Promise<number> {
   const r = await apiFetch<{ count: number }>(`${BASE_URL}/messages/unread-count`, { silent: true });
   return r.count;
 }
+
+export interface SupportContact {
+  id: string;
+  nickname: string | null;
+  avatarUrl: string | null;
+}
+
+// 官方客服账号（商品页“咨询客服”用，走 commerce 不受私信限制）
+export async function getSupportContact(): Promise<SupportContact> {
+  const r = await apiFetch<{ support: SupportContact }>(`${BASE_URL}/support/contact`);
+  return r.support;
+}

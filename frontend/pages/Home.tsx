@@ -50,9 +50,12 @@ export const Home: React.FC = () => {
             ? await getFollowingFeed(nextPage, PAGE_SIZE)
             : await getDiscoverFeed(nextPage, PAGE_SIZE);
         if (myRequestId !== requestIdRef.current) return;
-        setItems((prev) => (reset ? res.items : [...prev, ...res.items]));
+        // 后端可能返回空 body（apiFetch 解析失败时为 undefined），兜底成空数组，
+        // 避免在 setItems 的 updater 回调里读 undefined.items 直接抛到 ErrorBoundary
+        const nextItems = res?.items ?? [];
+        setItems((prev) => (reset ? nextItems : [...prev, ...nextItems]));
         setPage(nextPage);
-        setHasMore(res.hasMore);
+        setHasMore(res?.hasMore ?? false);
       } catch (err) {
         if (myRequestId !== requestIdRef.current) return;
         setError(err instanceof Error ? err.message : t('加载失败', 'Failed to load'));

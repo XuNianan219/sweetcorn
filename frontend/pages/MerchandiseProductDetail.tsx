@@ -7,6 +7,7 @@ import { useCurrentUser } from '../contexts/UserContext';
 import PageHeader from '../components/PageHeader';
 import { LazyImage } from '../components/LazyImage';
 import { ChatDrawer } from '../components/ChatDrawer';
+import { getSupportContact } from '../services/messageService';
 import { showInfo } from '../utils/toast';
 import { useLang } from '../contexts/LanguageContext';
 import { useAutoTranslate } from '../hooks/useAutoTranslate';
@@ -29,7 +30,9 @@ export const MerchandiseProductDetail: React.FC = () => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [following, setFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
+  // 聊天目标：官方客服 或 卖家。null 表示关闭。
+  const [chatTarget, setChatTarget] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
+  const [supportBusy, setSupportBusy] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -79,13 +82,31 @@ export const MerchandiseProductDetail: React.FC = () => {
     }
   };
 
-  const handleConsult = () => {
-    if (!isLoggedIn) {
-      showInfo(t('请先登录', 'Please log in first'));
-      navigate('/login');
-      return;
+  const requireLogin = (): boolean => {
+    if (isLoggedIn) return true;
+    showInfo(t('请先登录', 'Please log in first'));
+    navigate('/login');
+    return false;
+  };
+
+  // 咨询官方客服：联系平台客服账号（与卖家无关，任何商品都能用）
+  const handleConsultSupport = async () => {
+    if (!requireLogin() || supportBusy) return;
+    setSupportBusy(true);
+    try {
+      const s = await getSupportContact();
+      setChatTarget({ id: s.id, name: s.nickname || t('官方客服', 'Support'), avatar: s.avatarUrl });
+    } catch {
+      /* 错误已由 apiClient toast */
+    } finally {
+      setSupportBusy(false);
     }
-    if (seller) setChatOpen(true); // 就地弹出聊天框
+  };
+
+  // 联系卖家：就地弹出与卖家的聊天框
+  const handleContactSeller = () => {
+    if (!requireLogin() || !seller || isSelfSeller) return;
+    setChatTarget({ id: seller.id, name: seller.nickname || t('玉米店铺', 'Corn Shop'), avatar: seller.avatarUrl });
   };
 
   if (loading) {
@@ -196,17 +217,25 @@ export const MerchandiseProductDetail: React.FC = () => {
             </p>
           </button>
           {!isSelfSeller && (
-            <button
-              onClick={handleFollow}
-              disabled={followBusy}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
-                following
-                  ? 'border border-green-300 text-green-700 bg-white'
-                  : 'bg-green-700 text-white hover:bg-green-800'
-              }`}
-            >
-              {following ? t('已关注', 'Following') : t('+ 关注', '+ Follow')}
-            </button>
+            <div className="shrink-0 flex items-center gap-2">
+              <button
+                onClick={handleContactSeller}
+                className="px-4 py-1.5 rounded-full text-xs font-bold border border-green-300 text-green-700 bg-white hover:bg-green-50 transition-colors"
+              >
+                {t('联系卖家', 'Contact seller')}
+              </button>
+              <button
+                onClick={handleFollow}
+                disabled={followBusy}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
+                  following
+                    ? 'border border-green-300 text-green-700 bg-white'
+                    : 'bg-green-700 text-white hover:bg-green-800'
+                }`}
+              >
+                {following ? t('已关注', 'Following') : t('+ 关注', '+ Follow')}
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -225,12 +254,12 @@ export const MerchandiseProductDetail: React.FC = () => {
       <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-yellow-100">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={handleConsult}
-            disabled={!seller || isSelfSeller}
-            className="flex flex-col items-center justify-center text-green-700 disabled:opacity-40"
+            onClick={handleConsultSupport}
+            disabled={supportBusy}
+            className="flex flex-col items-center justify-center text-green-700 disabled:opacity-50"
           >
             <MessageCircle size={20} />
-            <span className="text-[11px] font-bold">{t('咨询客服', 'Contact')}</span>
+            <span className="text-[11px] font-bold">{t('咨询客服', 'Support')}</span>
           </button>
           <button
             disabled
@@ -242,14 +271,14 @@ export const MerchandiseProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* 咨询客服：就地聊天框 */}
-      {seller && (
+      {/* 就地聊天框：官方客服 或 卖家（均走 commerce，不受私信条数限制） */}
+      {chatTarget && (
         <ChatDrawer
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
-          userId={seller.id}
-          partnerName={seller.nickname || t('玉米店铺', 'Corn Shop')}
-          partnerAvatar={seller.avatarUrl}
+          open={!!chatTarget}
+          onClose={() => setChatTarget(null)}
+          userId={chatTarget.id}
+          partnerName={chatTarget.name}
+          partnerAvatar={chatTarget.avatar}
           kind="commerce"
         />
       )}

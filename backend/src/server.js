@@ -43,6 +43,7 @@ app.use('/api/celebrity-pages', require('./routes/celebrityPages'));
 app.use('/api/timeline-entries', require('./routes/timelineEntries'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/messages', require('./routes/messages'));
+app.use('/api/support', require('./routes/support').router);
 app.use('/api/travel', require('./routes/travel'));
 app.use('/api/translate', require('./routes/translate'));
 
@@ -51,7 +52,7 @@ app.use(errorHandler);
 
 // 智能端口分配：优先用配置端口，被占用则自动 +1，最多尝试 10 个
 async function startServer() {
-  let currentPort = parseInt(process.env.PORT, 10) || parseInt(port, 10) || 3000;
+  let currentPort = parseInt(process.env.PORT, 10) || parseInt(port, 10) || 4000;
   const maxAttempts = 10;
 
   for (let i = 0; i < maxAttempts; i++) {

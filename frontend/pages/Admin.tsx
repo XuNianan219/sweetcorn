@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Headphones,
   Pin,
   ShieldCheck,
   Users as UsersIcon,
@@ -36,8 +37,9 @@ import {
   rejectIdea,
   type Idea,
 } from '../services/merchandiseService';
+import { AdminSupport } from '../components/AdminSupport';
 
-type AdminTab = 'users' | 'events' | 'ideas';
+type AdminTab = 'users' | 'events' | 'ideas' | 'support';
 
 const PAGE_SIZE = 20;
 
@@ -302,6 +304,15 @@ export const Admin: React.FC = () => {
             </span>
           )}
         </button>
+        <button
+          onClick={() => setTab('support')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${
+            tab === 'support' ? 'gradient-ningyuzhi text-green-950 shadow-sm' : 'bg-white text-gray-500 border border-green-50 hover:text-green-600'
+          }`}
+        >
+          <Headphones size={15} />
+          {t('客服消息', 'Support')}
+        </button>
       </div>
 
       {error && (
@@ -563,6 +574,9 @@ export const Admin: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* ───── 客服消息 ───── */}
+      {tab === 'support' && <AdminSupport />}
 
       {/* 拒绝原因弹窗 */}
       {rejectingId && (
