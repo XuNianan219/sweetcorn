@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Camera,
+  Headphones,
   Loader2,
   LogOut,
   MessageCircle,
@@ -13,6 +14,8 @@ import {
   X,
 } from 'lucide-react';
 import { getMe, updateMe, type ApiUser } from '../services/usersApi';
+import { getSupportContact } from '../services/messageService';
+import { ChatDrawer } from '../components/ChatDrawer';
 import { uploadMedia } from '../services/mediaService';
 import { useCurrentUser } from '../contexts/UserContext';
 import { useLang } from '../contexts/LanguageContext';
@@ -63,6 +66,23 @@ export const Profile: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+
+  // 官方客服聊天（仿淘宝：藏在个人页面）。走 commerce，不受私信条数限制。
+  const [supportTarget, setSupportTarget] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
+  const [supportBusy, setSupportBusy] = useState(false);
+
+  const handleContactSupport = async () => {
+    if (supportBusy) return;
+    setSupportBusy(true);
+    try {
+      const s = await getSupportContact();
+      setSupportTarget({ id: s.id, name: s.nickname || t('官方客服', 'Support'), avatar: s.avatarUrl });
+    } catch {
+      /* 错误已由 apiClient toast */
+    } finally {
+      setSupportBusy(false);
+    }
+  };
 
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -317,6 +337,22 @@ export const Profile: React.FC = () => {
         <span className="text-gray-300 text-xl font-black">→</span>
       </button>
 
+      {/* 联系官方客服（仿淘宝：客服入口藏在个人页面） */}
+      <button
+        onClick={handleContactSupport}
+        disabled={supportBusy}
+        className="w-full bg-white rounded-[2rem] border border-green-50 shadow-sm p-5 flex items-center gap-3 hover:border-green-200 transition-colors disabled:opacity-60"
+      >
+        <span className="w-11 h-11 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+          {supportBusy ? <Loader2 size={20} className="animate-spin" /> : <Headphones size={22} />}
+        </span>
+        <span className="text-left flex-grow">
+          <span className="block font-black text-green-950">{t('联系官方客服', 'Contact support')}</span>
+          <span className="block text-xs text-gray-400 font-medium">{t('账号、订单或其他问题，找官方客服', 'Account, orders or anything else')}</span>
+        </span>
+        <span className="text-gray-300 text-xl font-black">→</span>
+      </button>
+
       {/* 我的关注入口 → 完整关注列表页 */}
       <button
         onClick={() => navigate('/following')}
@@ -400,6 +436,18 @@ export const Profile: React.FC = () => {
         <LogOut size={18} />
         {t('退出登录', 'Log out')}
       </button>
+
+      {/* 官方客服聊天框（commerce，无条数限制） */}
+      {supportTarget && (
+        <ChatDrawer
+          open={!!supportTarget}
+          onClose={() => setSupportTarget(null)}
+          userId={supportTarget.id}
+          partnerName={supportTarget.name}
+          partnerAvatar={supportTarget.avatar}
+          kind="commerce"
+        />
+      )}
     </div>
     </PullToRefreshWrapper>
   );
