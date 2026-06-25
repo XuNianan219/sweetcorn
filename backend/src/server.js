@@ -35,6 +35,7 @@ app.use('/api/likes', require('./routes/like'));
 app.use('/api/follows', require('./routes/follow'));
 app.use('/api/feed', require('./routes/feed'));
 app.use('/api/merchandise', require('./routes/merchandise'));
+app.use('/api/cart', require('./routes/cart'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/recycle', require('./routes/recycle'));

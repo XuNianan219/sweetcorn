@@ -9,6 +9,7 @@ import {
   Pencil,
   Save,
   ShieldCheck,
+  ShoppingCart,
   Trash2,
   Users,
   X,
@@ -333,6 +334,21 @@ export const Profile: React.FC = () => {
         <span className="text-left flex-grow">
           <span className="block font-black text-green-950">{t('我的私信', 'Messages')}</span>
           <span className="block text-xs text-gray-400 font-medium">{t('查看与其他玉米的聊天', 'Your chats with other corns')}</span>
+        </span>
+        <span className="text-gray-300 text-xl font-black">→</span>
+      </button>
+
+      {/* 我的购物车 */}
+      <button
+        onClick={() => navigate('/cart')}
+        className="w-full bg-white rounded-[2rem] border border-green-50 shadow-sm p-5 flex items-center gap-3 hover:border-green-200 transition-colors"
+      >
+        <span className="w-11 h-11 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+          <ShoppingCart size={22} />
+        </span>
+        <span className="text-left flex-grow">
+          <span className="block font-black text-green-950">{t('我的购物车', 'My cart')}</span>
+          <span className="block text-xs text-gray-400 font-medium">{t('查看已加入购物车的周边', 'Items you added to cart')}</span>
         </span>
         <span className="text-gray-300 text-xl font-black">→</span>
       </button>

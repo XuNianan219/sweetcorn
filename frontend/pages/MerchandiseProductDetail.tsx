@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart, MessageCircle, Play, Store } from 'lucide-react';
-import { getProduct, type Product } from '../services/merchandiseService';
+import { Heart, MessageCircle, Play, ShoppingCart, Store } from 'lucide-react';
+import { getProduct, toggleProductLike, type Product } from '../services/merchandiseService';
+import { addToCart } from '../services/cartService';
 import { getFollowStatus, toggleFollow } from '../services/followService';
 import { useCurrentUser } from '../contexts/UserContext';
 import PageHeader from '../components/PageHeader';
 import { LazyImage } from '../components/LazyImage';
 import { ChatDrawer } from '../components/ChatDrawer';
-import { showInfo } from '../utils/toast';
+import { showInfo, showSuccess } from '../utils/toast';
 import { useLang } from '../contexts/LanguageContext';
 import { useAutoTranslate } from '../hooks/useAutoTranslate';
 
@@ -31,6 +32,11 @@ export const MerchandiseProductDetail: React.FC = () => {
   const [followBusy, setFollowBusy] = useState(false);
   // 聊天目标：卖家。null 表示关闭。
   const [chatTarget, setChatTarget] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
+  // 点赞 & 购物车
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [addingCart, setAddingCart] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -38,6 +44,8 @@ export const MerchandiseProductDetail: React.FC = () => {
       .then((p) => {
         setProduct(p);
         setActiveIdx(p.videoUrl ? -1 : 0); // 有宣传视频则默认展示视频
+        setLiked(!!p.isLikedByMe);
+        setLikeCount(p.likeCount ?? 0);
       })
       .catch(() => setError(t('商品不存在', 'Product not found')))
       .finally(() => setLoading(false));
@@ -91,6 +99,40 @@ export const MerchandiseProductDetail: React.FC = () => {
   const handleContactSeller = () => {
     if (!requireLogin() || !seller || isSelfSeller) return;
     setChatTarget({ id: seller.id, name: seller.nickname || t('玉米店铺', 'Corn Shop'), avatar: seller.avatarUrl });
+  };
+
+  // 点赞 toggle（乐观更新，失败回滚）
+  const handleToggleLike = async () => {
+    if (!requireLogin() || !product || likeBusy) return;
+    setLikeBusy(true);
+    const prevLiked = liked;
+    const prevCount = likeCount;
+    setLiked(!prevLiked);
+    setLikeCount(prevCount + (prevLiked ? -1 : 1));
+    try {
+      const r = await toggleProductLike(product.id);
+      setLiked(r.liked);
+      setLikeCount(r.likeCount);
+    } catch {
+      setLiked(prevLiked);
+      setLikeCount(prevCount);
+    } finally {
+      setLikeBusy(false);
+    }
+  };
+
+  // 加入购物车
+  const handleAddToCart = async () => {
+    if (!requireLogin() || !product || addingCart) return;
+    setAddingCart(true);
+    try {
+      await addToCart(product.id, 1);
+      showSuccess(t('已加入购物车', 'Added to cart'));
+    } catch {
+      /* 错误已由 apiClient toast */
+    } finally {
+      setAddingCart(false);
+    }
   };
 
   if (loading) {
@@ -172,9 +214,18 @@ export const MerchandiseProductDetail: React.FC = () => {
           <span className="text-3xl">{product.price}</span>
         </p>
         <h1 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 leading-snug">{tr.name}</h1>
-        <div className="flex items-center gap-1 text-sm text-gray-400">
-          <Heart size={14} />
-          <span>{product.wantCount} {t('人想要', 'want this')}</span>
+        <div className="flex items-center gap-3 text-sm">
+          <button
+            onClick={handleToggleLike}
+            disabled={likeBusy}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold transition-colors disabled:opacity-60 ${
+              liked ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-500 hover:text-red-500'
+            }`}
+          >
+            <Heart size={15} className={liked ? 'fill-current' : ''} />
+            <span>{likeCount > 0 ? likeCount : t('点赞', 'Like')}</span>
+          </button>
+          <span className="text-gray-400">{product.wantCount} {t('人想要', 'want this')}</span>
         </div>
       </div>
 
@@ -226,24 +277,32 @@ export const MerchandiseProductDetail: React.FC = () => {
         </div>
       )}
 
-      {/* 底部操作栏（淘宝式：咨询客服 + 想要） */}
+      {/* 底部操作栏（淘宝式：咨询卖家 + 加入购物车 + 想要） */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-yellow-100">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={handleContactSeller}
             disabled={!seller || isSelfSeller}
-            className="flex flex-col items-center justify-center text-green-700 disabled:opacity-40"
+            className="flex flex-col items-center justify-center text-green-700 disabled:opacity-40 shrink-0"
             title={isSelfSeller ? t('这是你发布的商品', 'This is your own item') : undefined}
           >
             <MessageCircle size={20} />
             <span className="text-[11px] font-bold">{t('咨询卖家', 'Seller')}</span>
           </button>
           <button
+            onClick={handleAddToCart}
+            disabled={addingCart}
+            className="flex-1 py-3 border-2 border-green-600 text-green-700 font-black rounded-2xl flex items-center justify-center gap-1.5 hover:bg-green-50 transition-colors disabled:opacity-60"
+          >
+            <ShoppingCart size={18} />
+            {t('加入购物车', 'Add to cart')}
+          </button>
+          <button
             disabled
-            className="flex-grow py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-black rounded-2xl shadow-sm disabled:opacity-60"
+            className="flex-1 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-black rounded-2xl shadow-sm disabled:opacity-60"
             title={t('下单功能即将上线', 'Ordering coming soon')}
           >
-            {t('想要这个（即将上线）', 'I want this (coming soon)')}
+            {t('想要这个（即将上线）', 'Buy (soon)')}
           </button>
         </div>
       </div>

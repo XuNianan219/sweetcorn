@@ -1,4 +1,5 @@
-import { getApiBase } from '../config/api';
+import { getApiBase, API_BASE_URL } from '../config/api';
+import { apiFetch } from '../utils/apiClient';
 
 function getToken(): string | null {
   return localStorage.getItem('sweetcorn_jwt_token');
@@ -29,6 +30,8 @@ export interface Product {
   sellerId?: string | null;
   seller?: ProductSeller | null;
   createdAt: string;
+  likeCount?: number;
+  isLikedByMe?: boolean;
 }
 
 export interface IdeaAuthor {
@@ -113,6 +116,16 @@ export async function getProduct(id: string): Promise<Product> {
   if (!res.ok) throw new Error('获取商品详情失败');
   const data = await res.json();
   return data.product as Product;
+}
+
+// 商品点赞 toggle（乐观更新：失败不弹 toast，交调用方回滚）
+export async function toggleProductLike(
+  productId: string,
+): Promise<{ liked: boolean; likeCount: number }> {
+  return apiFetch(`${API_BASE_URL}/api/merchandise/products/${productId}/like`, {
+    method: 'POST',
+    silent: true,
+  });
 }
 
 export async function getIdeas(page = 1, limit = 20): Promise<IdeasResponse> {

@@ -25,6 +25,7 @@ import { MerchandiseSubmit } from './pages/MerchandiseSubmit';
 import { MerchandiseProductSubmit } from './pages/MerchandiseProductSubmit';
 import { MerchandiseIdeaDetail } from './pages/MerchandiseIdeaDetail';
 import { MerchandiseProductDetail } from './pages/MerchandiseProductDetail';
+import { Cart } from './pages/Cart';
 import { Activity } from './pages/Activity';
 import { TagResults } from './pages/TagResults';
 import { SupportJoin } from './pages/SupportJoin';
@@ -197,6 +198,7 @@ const AnimatedRoutes: React.FC = () => {
           <Route path="/merchandise/product/submit" element={<MerchandiseProductSubmit />} />
           <Route path="/merchandise/idea/:id" element={<MerchandiseIdeaDetail />} />
           <Route path="/merchandise/product/:id" element={<MerchandiseProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
         </Routes>
       </motion.div>
     </AnimatePresence>

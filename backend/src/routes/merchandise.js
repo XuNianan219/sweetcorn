@@ -38,20 +38,61 @@ router.get('/products', async (req, res, next) => {
   }
 });
 
-// GET /api/merchandise/products/:id  免登录（含卖家公开信息，用于商品详情/咨询）
-router.get('/products/:id', async (req, res, next) => {
+// GET /api/merchandise/products/:id  可选登录（含卖家信息 + 点赞数 / 我是否已赞）
+router.get('/products/:id', optionalAuth, async (req, res, next) => {
   try {
     const product = await prisma.product.findUnique({
       where: { id: req.params.id },
       include: {
         seller: { select: { id: true, nickname: true, avatarUrl: true, bio: true } },
+        _count: { select: { likes: true } },
+        ...(req.userId
+          ? { likes: { where: { userId: req.userId }, select: { id: true }, take: 1 } }
+          : {}),
       },
     });
     if (!product) {
       res.status(404);
       throw new Error('商品不存在');
     }
-    res.json({ product });
+    const { _count, likes, ...rest } = product;
+    res.json({
+      product: {
+        ...rest,
+        likeCount: _count ? _count.likes : 0,
+        isLikedByMe: Array.isArray(likes) && likes.length > 0,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/merchandise/products/:id/like  [auth] —— 点赞 / 取消点赞（toggle）
+router.post('/products/:id/like', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const productId = req.params.id;
+
+    const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true } });
+    if (!product) {
+      res.status(404);
+      throw new Error('商品不存在');
+    }
+
+    const existing = await prisma.productLike.findUnique({
+      where: { userId_productId: { userId, productId } },
+    });
+    let liked;
+    if (existing) {
+      await prisma.productLike.delete({ where: { id: existing.id } });
+      liked = false;
+    } else {
+      await prisma.productLike.create({ data: { userId, productId } });
+      liked = true;
+    }
+    const likeCount = await prisma.productLike.count({ where: { productId } });
+    res.json({ liked, likeCount });
   } catch (error) {
     next(error);
   }
