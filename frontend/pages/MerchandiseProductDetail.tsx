@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Heart, MessageCircle, Play, ShoppingCart, Store } from 'lucide-react';
+import { Heart, Play, ShoppingCart, Store } from 'lucide-react';
 import { getProduct, toggleProductLike, type Product } from '../services/merchandiseService';
 import { addToCart } from '../services/cartService';
 import { getFollowStatus, toggleFollow } from '../services/followService';
 import { useCurrentUser } from '../contexts/UserContext';
 import PageHeader from '../components/PageHeader';
 import { LazyImage } from '../components/LazyImage';
-import { ChatDrawer } from '../components/ChatDrawer';
 import { showInfo, showSuccess } from '../utils/toast';
 import { useLang } from '../contexts/LanguageContext';
 import { useAutoTranslate } from '../hooks/useAutoTranslate';
@@ -30,8 +29,6 @@ export const MerchandiseProductDetail: React.FC = () => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [following, setFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
-  // 聊天目标：卖家。null 表示关闭。
-  const [chatTarget, setChatTarget] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
   // 点赞 & 购物车
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -93,12 +90,6 @@ export const MerchandiseProductDetail: React.FC = () => {
     showInfo(t('请先登录', 'Please log in first'));
     navigate('/login');
     return false;
-  };
-
-  // 咨询客服 = 联系该商品的卖家（发布人）。仿淘宝：商品页客服即店铺/卖家本人。
-  const handleContactSeller = () => {
-    if (!requireLogin() || !seller || isSelfSeller) return;
-    setChatTarget({ id: seller.id, name: seller.nickname || t('玉米店铺', 'Corn Shop'), avatar: seller.avatarUrl });
   };
 
   // 点赞 toggle（乐观更新，失败回滚）
@@ -277,18 +268,9 @@ export const MerchandiseProductDetail: React.FC = () => {
         </div>
       )}
 
-      {/* 底部操作栏（淘宝式：咨询卖家 + 加入购物车 + 想要） */}
+      {/* 底部操作栏（加入购物车 + 想要） */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-yellow-100">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={handleContactSeller}
-            disabled={!seller || isSelfSeller}
-            className="flex flex-col items-center justify-center text-green-700 disabled:opacity-40 shrink-0"
-            title={isSelfSeller ? t('这是你发布的商品', 'This is your own item') : undefined}
-          >
-            <MessageCircle size={20} />
-            <span className="text-[11px] font-bold">{t('咨询卖家', 'Seller')}</span>
-          </button>
           <button
             onClick={handleAddToCart}
             disabled={addingCart}
@@ -307,17 +289,6 @@ export const MerchandiseProductDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* 就地聊天框：与卖家咨询（走 commerce，不受私信条数限制） */}
-      {chatTarget && (
-        <ChatDrawer
-          open={!!chatTarget}
-          onClose={() => setChatTarget(null)}
-          userId={chatTarget.id}
-          partnerName={chatTarget.name}
-          partnerAvatar={chatTarget.avatar}
-          kind="commerce"
-        />
-      )}
     </div>
   );
 };

@@ -38,6 +38,23 @@ router.get('/products', async (req, res, next) => {
   }
 });
 
+// GET /api/merchandise/products/mine  [auth] —— 我发布的商品（个人主页用）
+// 注意：必须定义在 /products/:id 之前，否则 "mine" 会被当成 :id
+router.get('/products/mine', requireAuth, async (req, res, next) => {
+  try {
+    const products = await prisma.product.findMany({
+      where: { sellerId: req.user.userId },
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { likes: true } } },
+    });
+    res.json({
+      products: products.map(({ _count, ...p }) => ({ ...p, likeCount: _count ? _count.likes : 0 })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/merchandise/products/:id  可选登录（含卖家信息 + 点赞数 / 我是否已赞）
 router.get('/products/:id', optionalAuth, async (req, res, next) => {
   try {
@@ -93,6 +110,31 @@ router.post('/products/:id/like', requireAuth, async (req, res, next) => {
     }
     const likeCount = await prisma.productLike.count({ where: { productId } });
     res.json({ liked, likeCount });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/merchandise/products/:id  [auth] —— 下架商品（仅卖家本人或管理员）
+router.delete('/products/:id', requireAuth, async (req, res, next) => {
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, sellerId: true },
+    });
+    if (!product) {
+      res.status(404);
+      throw new Error('商品不存在');
+    }
+    const isOwner = product.sellerId && product.sellerId === req.user.userId;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    if (!isOwner && !isAdmin) {
+      res.status(403);
+      throw new Error('只能下架自己发布的商品');
+    }
+    // 点赞 / 购物车记录随商品级联删除（外键 onDelete: Cascade）
+    await prisma.product.delete({ where: { id: product.id } });
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

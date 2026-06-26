@@ -100,6 +100,21 @@ export async function submitProduct(data: SubmitProductData): Promise<Product> {
   return result.product as Product;
 }
 
+// 我发布的商品（个人主页用）
+export async function getMyProducts(): Promise<Product[]> {
+  const res = await fetch(`${getApiBase()}/api/merchandise/products/mine`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error('获取我的商品失败');
+  const data = await res.json();
+  return data.products as Product[];
+}
+
+// 下架商品（仅卖家本人或管理员）
+export async function deleteProduct(id: string): Promise<void> {
+  await apiFetch(`${API_BASE_URL}/api/merchandise/products/${id}`, { method: 'DELETE' });
+}
+
 export async function getProducts(): Promise<Product[]> {
   const res = await fetch(`${getApiBase()}/api/merchandise/products`, {
     headers: authHeaders(),

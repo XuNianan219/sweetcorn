@@ -22,6 +22,7 @@ import { useCurrentUser } from '../contexts/UserContext';
 import { useLang } from '../contexts/LanguageContext';
 import { RecycleBin } from '../components/RecycleBin';
 import { MyIdeas } from '../components/MyIdeas';
+import { MyProducts } from '../components/MyProducts';
 import { LanguageToggle } from '../components/LanguageToggle';
 import { ProfileSkeleton } from '../components/skeletons/ProfileSkeleton';
 import PageHeader from '../components/PageHeader';
@@ -383,6 +384,9 @@ export const Profile: React.FC = () => {
         </span>
         <span className="text-gray-300 text-xl font-black">→</span>
       </button>
+
+      {/* 我发布的商品 */}
+      <MyProducts />
 
       {/* 我的创意（周边创意审核状态） */}
       <MyIdeas />
