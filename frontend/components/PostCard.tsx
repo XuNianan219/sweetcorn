@@ -1,8 +1,9 @@
 // Feed 流里单个帖子卡片（小红书风格：图在上、文字在下，点赞爱心右下角）
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, MessageCircle, Trash2, ShieldX } from 'lucide-react';
 import { type FeedPost, toggleLike, deletePost } from '../services/feedService';
+import { trackPostEvent } from '../services/recommendationService';
 import { useCurrentUser } from '../contexts/UserContext';
 import { useLang } from '../contexts/LanguageContext';
 import { LazyImage } from './LazyImage';
@@ -24,6 +25,42 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onChange, onDeleted, t
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleted, setDeleted] = useState(false);
+
+  // 曝光 + 快速划走埋点（纯被动，不改样式）：
+  //  - 进入视口（≥50%）首次 → impression
+  //  - 离开视口时，若可见 <3s 且未点击 → skip（强负信号）
+  const rootRef = useRef<HTMLDivElement>(null);
+  const impressed = useRef(false);
+  const skipped = useRef(false);
+  const clicked = useRef(false);
+  const enteredAt = useRef<number | null>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            enteredAt.current = Date.now();
+            if (!impressed.current) {
+              impressed.current = true;
+              trackPostEvent(post.id, 'impression');
+            }
+          } else if (enteredAt.current && !clicked.current && !skipped.current) {
+            const visibleMs = Date.now() - enteredAt.current;
+            enteredAt.current = null;
+            if (visibleMs < 3000) {
+              skipped.current = true;
+              trackPostEvent(post.id, 'skip', Math.round(visibleMs / 1000));
+            }
+          }
+        }
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [post.id]);
 
   const isOwner = !!user && user.id === post.authorId;
   // 自己的帖子显示「删除」；不是自己的但我是管理员显示「管理员删除」
@@ -54,6 +91,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onChange, onDeleted, t
     post.mediaType === 'image' && post.mediaUrls.length > 0 ? post.mediaUrls[0] : null;
 
   const handleCardClick = () => {
+    clicked.current = true; // 点击即不算 skip
     navigate(`/posts/${post.id}`);
   };
 
@@ -90,6 +128,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onChange, onDeleted, t
 
   return (
     <div
+      ref={rootRef}
       onClick={handleCardClick}
       className="card-clickable group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow break-inside-avoid mb-3 md:mb-4 border border-gray-100"
     >

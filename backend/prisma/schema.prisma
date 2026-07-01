@@ -34,6 +34,8 @@ model User {
   products               Product[] @relation("UserProducts")
   productLikes           ProductLike[]
   cartItems              CartItem[]
+  userEvents             UserEvent[]
+  userPreferences        UserPreference[]
 
   @@map("users")
 }
@@ -90,14 +92,63 @@ model Product {
   imageUrls   String[] @default([]) @map("image_urls")
   videoUrl    String   @default("") @map("video_url")
   wantCount   Int      @default(0) @map("want_count")
+  category    String   @default("")
+  popularity  Int      @default(0)
+  isGroupBuy  Boolean  @default(false) @map("is_group_buy")
+  groupStatus String   @default("") @map("group_status") // forming / success / expired
+  targetCount Int      @default(0) @map("target_count")
+  currentCount Int     @default(0) @map("current_count")
+  deadline    DateTime? @db.Timestamptz(6)
   sellerId    String?  @map("seller_id") @db.Uuid
   seller      User?    @relation("UserProducts", fields: [sellerId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   likes       ProductLike[]
   cartItems   CartItem[]
+  tags        ProductTag[]
+  events      UserEvent[]
 
   @@index([sellerId])
+  @@index([groupStatus, deadline])
   @@map("products")
+}
+
+model ProductTag {
+  productId String  @map("product_id") @db.Uuid
+  tag       String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tag])
+  @@index([tag])
+  @@map("product_tags")
+}
+
+model UserEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  productId  String?  @map("product_id") @db.Uuid // 仅商品事件；帖子事件为空
+  targetType String   @default("product") @map("target_type") // 'post' / 'product'
+  targetId   String?  @map("target_id") @db.Uuid // 多态目标 id（post 指 posts、product 指 products）
+  eventType  String   @map("event_type") // 商品: view/click/favorite/assist/group_join/purchase；帖子软行为: impression/view/dwell/video_complete/skip
+  weight     Int      @default(1)
+  duration   Int? // dwell 停留秒数，其它事件为空
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([targetType, targetId])
+  @@map("user_events")
+}
+
+model UserPreference {
+  userId    String   @map("user_id") @db.Uuid
+  tag       String
+  score     Float    @default(0)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, tag])
+  @@map("user_preferences")
 }
 
 model ProductLike {

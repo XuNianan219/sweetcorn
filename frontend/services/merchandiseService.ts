@@ -32,6 +32,17 @@ export interface Product {
   createdAt: string;
   likeCount?: number;
   isLikedByMe?: boolean;
+  // ─── 团购 / 推荐相关（普通商品为空/默认）───
+  category?: string;
+  popularity?: number;
+  isGroupBuy?: boolean;
+  groupStatus?: '' | 'forming' | 'success' | 'expired';
+  targetCount?: number;
+  currentCount?: number;
+  deadline?: string | null;
+  _score?: number; // 「猜你喜欢」最终分（调试用）
+  _urgency?: number; // 团购紧迫分
+  progress?: number; // current/target，0~1
 }
 
 export interface IdeaAuthor {
@@ -80,6 +91,7 @@ export interface SubmitProductData {
   price: number;
   imageUrls: string[];
   videoUrl?: string;
+  tags?: string[];
 }
 
 export async function submitProduct(data: SubmitProductData): Promise<Product> {

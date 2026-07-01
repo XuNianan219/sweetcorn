@@ -4,6 +4,7 @@ import { Lightbulb, Package, Plus } from 'lucide-react';
 import { MerchandiseBanner } from '../components/merchandise/MerchandiseBanner';
 import { ProductCard } from '../components/merchandise/ProductCard';
 import { IdeaCard } from '../components/merchandise/IdeaCard';
+import { GroupBuyToAssist } from '../components/merchandise/GroupBuyToAssist';
 import { getIdeas, getProducts, type Idea, type Product } from '../services/merchandiseService';
 import { PullToRefreshWrapper } from '../components/PullToRefreshWrapper';
 import { useLang } from '../contexts/LanguageContext';
@@ -60,6 +61,9 @@ export const Merchandise: React.FC = () => {
 
       {/* 已上架周边：移动端仅当前 Tab 显示，桌面端始终显示 */}
       <section className={`${activeTab === 'products' ? 'block' : 'hidden'} md:block`}>
+        {/* 即将成团 · 帮 TA 助力（团购板块，置于列表上方）*/}
+        <GroupBuyToAssist />
+
         <div className="mb-6 pb-3 border-b border-yellow-100 flex items-end justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">

@@ -4,6 +4,7 @@ const requireAuth = require('../middleware/authMiddleware');
 const { requireAdmin } = require('../middleware/authMiddleware');
 const { verifyToken } = require('../services/tokenService');
 const { createNotification } = require('../services/notificationService');
+const { getSortedProducts } = require('../services/recommendationService');
 
 const router = express.Router();
 
@@ -26,12 +27,10 @@ function optionalAuth(req, res, next) {
 
 // ─── 商品接口 ────────────────────────────────────────────────
 
-// GET /api/merchandise/products  免登录
-router.get('/products', async (req, res, next) => {
+// GET /api/merchandise/products  可选登录 —— 按推荐分排序（未登录/无偏好时退化为热度+时间）
+router.get('/products', optionalAuth, async (req, res, next) => {
   try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const products = await getSortedProducts(req.userId);
     res.json({ products });
   } catch (error) {
     next(error);
@@ -143,7 +142,8 @@ router.delete('/products/:id', requireAuth, async (req, res, next) => {
 // POST /api/merchandise/products  [auth] —— 任何登录用户都可上架商品（卖家=自己）
 router.post('/products', requireAuth, async (req, res, next) => {
   try {
-    const { name, description, price, imageUrls, videoUrl } = req.body;
+    const { name, description, price, imageUrls, videoUrl, isGroupBuy, targetCount, deadline, tags } =
+      req.body;
 
     if (!name || !String(name).trim()) {
       res.status(400);
@@ -155,6 +155,22 @@ router.post('/products', requireAuth, async (req, res, next) => {
       throw new Error('价格不合法');
     }
 
+    // 团购字段（均可选，不传即普通商品）
+    const groupBuy = isGroupBuy === true || isGroupBuy === 'true';
+    let deadlineDate = null;
+    if (deadline) {
+      const d = new Date(deadline);
+      if (!Number.isNaN(d.getTime())) deadlineDate = d;
+    }
+
+    // 标签：接受数组或逗号分隔字符串 → trim / 去空 / 去重
+    const rawTags = Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+        ? tags.split(/[,，]/)
+        : [];
+    const tagList = [...new Set(rawTags.map((s) => String(s).trim()).filter(Boolean))];
+
     const product = await prisma.product.create({
       data: {
         name: String(name).trim(),
@@ -165,6 +181,15 @@ router.post('/products', requireAuth, async (req, res, next) => {
           : [],
         videoUrl: videoUrl ? String(videoUrl).trim() : '',
         sellerId: req.user.userId,
+        isGroupBuy: groupBuy,
+        ...(groupBuy
+          ? {
+              groupStatus: 'forming',
+              targetCount: parseInt(targetCount) || 0,
+              deadline: deadlineDate,
+            }
+          : {}),
+        ...(tagList.length ? { tags: { create: tagList.map((tag) => ({ tag })) } } : {}),
       },
       include: { seller: { select: { id: true, nickname: true, avatarUrl: true, bio: true } } },
     });

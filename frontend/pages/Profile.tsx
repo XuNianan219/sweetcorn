@@ -354,18 +354,24 @@ export const Profile: React.FC = () => {
         <span className="text-gray-300 text-xl font-black">→</span>
       </button>
 
-      {/* 联系官方客服（仿淘宝：客服入口藏在个人页面） */}
+      {/* 客服入口：管理员显示「处理客诉」进后台处理台；普通用户显示「联系官方客服」开聊天 */}
       <button
-        onClick={handleContactSupport}
-        disabled={supportBusy}
+        onClick={isAdmin ? () => navigate('/complaints') : handleContactSupport}
+        disabled={!isAdmin && supportBusy}
         className="w-full bg-white rounded-[2rem] border border-green-50 shadow-sm p-5 flex items-center gap-3 hover:border-green-200 transition-colors disabled:opacity-60"
       >
         <span className="w-11 h-11 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
-          {supportBusy ? <Loader2 size={20} className="animate-spin" /> : <Headphones size={22} />}
+          {!isAdmin && supportBusy ? <Loader2 size={20} className="animate-spin" /> : <Headphones size={22} />}
         </span>
         <span className="text-left flex-grow">
-          <span className="block font-black text-green-950">{t('联系官方客服', 'Contact support')}</span>
-          <span className="block text-xs text-gray-400 font-medium">{t('账号、订单或其他问题，找官方客服', 'Account, orders or anything else')}</span>
+          <span className="block font-black text-green-950">
+            {isAdmin ? t('处理客诉', 'Handle complaints') : t('联系官方客服', 'Contact support')}
+          </span>
+          <span className="block text-xs text-gray-400 font-medium">
+            {isAdmin
+              ? t('查看并回复所有用户的客诉', 'View & reply to all user complaints')
+              : t('账号、订单或其他问题，找官方客服', 'Account, orders or anything else')}
+          </span>
         </span>
         <span className="text-gray-300 text-xl font-black">→</span>
       </button>

@@ -80,8 +80,8 @@ export const EventSubmit: React.FC = () => {
         externalUrl: externalUrl.trim(),
         celebrities,
       });
-      setToast(t('已提交，等待管理员审核', 'Submitted — awaiting admin review'));
-      setTimeout(() => navigate('/profile'), 1200);
+      setToast(t('已发布', 'Published'));
+      setTimeout(() => navigate('/category/events-business'), 1200);
     } catch (err: any) {
       setError(err?.message || t('提交失败', 'Submission failed'));
       setSubmitting(false);
@@ -103,8 +103,8 @@ export const EventSubmit: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-[2rem] border border-green-50 shadow-sm p-6 md:p-8 space-y-5">
         <div>
-          <h1 className="text-2xl font-black text-green-950">{t('提交活动', 'Submit Event')}</h1>
-          <p className="text-sm text-gray-400 font-medium mt-1">{t('提交后需管理员审核才会公开展示', 'Needs admin review before going public')}</p>
+          <h1 className="text-2xl font-black text-green-950">{t('发布活动', 'Publish Event')}</h1>
+          <p className="text-sm text-gray-400 font-medium mt-1">{t('发布后立即公开展示；活动结束后自动下架', 'Goes live immediately; auto-hidden after it ends')}</p>
         </div>
 
         {error && (
@@ -219,7 +219,7 @@ export const EventSubmit: React.FC = () => {
           className="w-full py-3.5 gradient-ningyuzhi text-green-950 font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.01] transition-transform disabled:opacity-50"
         >
           {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-          {t('提交审核', 'Submit for review')}
+          {t('发布活动', 'Publish')}
         </button>
       </form>
     </div>

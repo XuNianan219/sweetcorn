@@ -18,7 +18,10 @@ router.get('/', async (req, res, next) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
     const skip = (page - 1) * limit;
 
-    const where = { status: 'approved' };
+    // 过期即隐藏：结束时间优先（endAt 未到）；没填 endAt 则按开始时间（startAt 未到）
+    const now = new Date();
+    const notExpired = [{ endAt: { gte: now } }, { endAt: null, startAt: { gte: now } }];
+    const where = { status: 'approved', OR: notExpired };
     if (type && type !== 'all' && VALID_TYPES.includes(type)) {
       where.eventType = type;
     }
@@ -54,11 +57,16 @@ router.get('/upcoming', async (req, res, next) => {
   }
 });
 
-// GET /api/events/pinned  置顶活动（免登录）
+// GET /api/events/pinned  置顶活动（免登录，过期即隐藏）
 router.get('/pinned', async (req, res, next) => {
   try {
+    const now = new Date();
     const events = await prisma.event.findMany({
-      where: { status: 'approved', isPinned: true },
+      where: {
+        status: 'approved',
+        isPinned: true,
+        OR: [{ endAt: { gte: now } }, { endAt: null, startAt: { gte: now } }],
+      },
       orderBy: { startAt: 'asc' },
     });
     res.json({ events });
@@ -82,8 +90,8 @@ router.get('/mine', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/events  提交活动
-router.post('/', requireAuth, async (req, res, next) => {
+// POST /api/events  上传活动（仅管理员，传即上架，无需审核）
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const {
       title,
@@ -125,7 +133,8 @@ router.post('/', requireAuth, async (req, res, next) => {
         endAt: endAt ? new Date(endAt) : null,
         externalUrl: externalUrl ? String(externalUrl).trim() : '',
         celebrities: Array.isArray(celebrities) ? celebrities : [],
-        status: 'pending',
+        status: 'approved', // 管理员上传即上架
+        reviewedBy: req.user.userId,
         submittedBy: req.user.userId,
       },
     });

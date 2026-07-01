@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import { type FeedPost, getPost, toggleLike } from '../services/feedService';
+import { trackPostEvent } from '../services/recommendationService';
 import { timeAgo } from '../services/commentService';
 import { getFollowStatus, toggleFollow } from '../services/followService';
 import { getCategoryName } from '../constants/categories';
@@ -84,6 +85,23 @@ export const PostDetail: React.FC = () => {
       cancelled = true;
     };
   }, [id]);
+
+  // 软行为埋点：点开详情记 view（一次），离开时按停留秒数记 dwell
+  const viewTracked = useRef(false);
+  const videoHooked = useRef(false); // 视频过 5 秒钩子只发一次
+  useEffect(() => {
+    if (!post) return;
+    if (!viewTracked.current) {
+      viewTracked.current = true;
+      trackPostEvent(post.id, 'view');
+    }
+    const enterAt = Date.now();
+    const postId = post.id;
+    return () => {
+      const sec = Math.round((Date.now() - enterAt) / 1000);
+      if (sec > 0) trackPostEvent(postId, 'dwell', sec);
+    };
+  }, [post?.id]);
 
   const handleLike = async () => {
     if (!post || likeBusy) return;
@@ -239,7 +257,19 @@ export const PostDetail: React.FC = () => {
 
         {/* 媒体 */}
         {videoUrl && (
-          <video src={videoUrl} controls playsInline className="w-full rounded-2xl bg-black max-h-[70vh]" />
+          <video
+            src={videoUrl}
+            controls
+            playsInline
+            onTimeUpdate={(e) => {
+              if (!videoHooked.current && e.currentTarget.currentTime >= 5) {
+                videoHooked.current = true;
+                trackPostEvent(post.id, 'video_5s');
+              }
+            }}
+            onEnded={() => trackPostEvent(post.id, 'video_complete')}
+            className="w-full rounded-2xl bg-black max-h-[70vh]"
+          />
         )}
         {images.length === 1 && (
           <div className="rounded-2xl overflow-hidden">

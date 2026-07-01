@@ -30,6 +30,7 @@ export const MerchandiseProductSubmit: React.FC = () => {
     Array.isArray(prefill.imageUrls) ? prefill.imageUrls.slice(0, MAX_IMAGES) : [],
   );
   const [videoUrl, setVideoUrl] = useState('');
+  const [tags, setTags] = useState('');
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -89,12 +90,21 @@ export const MerchandiseProductSubmit: React.FC = () => {
     }
     setSubmitting(true);
     try {
+      const tagList: string[] = Array.from(
+        new Set(
+          tags
+            .split(/[,，]/)
+            .map((s) => s.trim())
+            .filter(Boolean),
+        ),
+      );
       const p = await submitProduct({
         name: name.trim(),
         description: description.trim(),
         price: Number(price),
         imageUrls,
         videoUrl,
+        tags: tagList,
       });
       showSuccess(t('商品已上架！', 'Product listed!'));
       navigate(`/merchandise/product/${p.id}`);
@@ -199,6 +209,17 @@ export const MerchandiseProductSubmit: React.FC = () => {
             rows={4}
             placeholder={t('材质、尺寸、发货方式等', 'Material, size, shipping, etc.')}
             className={`${inputCls} resize-none`}
+          />
+        </div>
+
+        {/* 标签（逗号分隔，用于推荐） */}
+        <div className="space-y-1.5">
+          <label className={labelCls}>{t('标签（逗号分隔，可选）', 'Tags (comma-separated, optional)')}</label>
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder={t('例如：应援棒, 演唱会, 梓渝', 'e.g. lightstick, concert, Ziyu')}
+            className={inputCls}
           />
         </div>
 

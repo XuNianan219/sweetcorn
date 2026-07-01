@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NetworkStatus } from './components/NetworkStatus';
+import { CustomerService } from './components/CustomerService';
 import { Login } from './pages/Login';
 import { Landing } from './pages/Landing';
 import { Home } from './pages/Home';
@@ -52,6 +53,7 @@ import { AdminTimelineForm } from './pages/AdminTimelineForm';
 import { AdminTravel } from './pages/AdminTravel';
 import { AdminTravelForm } from './pages/AdminTravelForm';
 import { MySubmittedEvents } from './pages/MySubmittedEvents';
+import { Complaints } from './pages/Complaints';
 import { RequireAuth } from './components/RequireAuth';
 import { RequireAdmin } from './components/RequireAdmin';
 import { RequireSuperAdmin } from './components/RequireSuperAdmin';
@@ -180,9 +182,9 @@ const AnimatedRoutes: React.FC = () => {
           <Route
             path="/events/submit"
             element={
-              <RequireAuth>
+              <RequireAdmin>
                 <EventSubmit />
-              </RequireAuth>
+              </RequireAdmin>
             }
           />
           <Route
@@ -199,6 +201,14 @@ const AnimatedRoutes: React.FC = () => {
           <Route path="/merchandise/idea/:id" element={<MerchandiseIdeaDetail />} />
           <Route path="/merchandise/product/:id" element={<MerchandiseProductDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route
+            path="/complaints"
+            element={
+              <RequireAdmin>
+                <Complaints />
+              </RequireAdmin>
+            }
+          />
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -212,6 +222,7 @@ const App: React.FC = () => {
         <LanguageProvider>
         <Toaster position="top-center" richColors closeButton duration={3000} />
         <NetworkStatus />
+        <CustomerService />
         <ErrorBoundary>
           <Routes>
             <Route path="/login" element={<Login />} />

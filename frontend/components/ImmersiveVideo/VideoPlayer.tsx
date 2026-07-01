@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Heart, Pause, Volume2, VolumeX } from 'lucide-react';
 import type { FeedPost } from '../../services/feedService';
+import { trackPostEvent } from '../../services/recommendationService';
 import { useLang } from '../../contexts/LanguageContext';
 
 interface VideoPlayerProps {
@@ -29,8 +30,26 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const lastTap = useRef(0);
   const singleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completed = useRef(false); // 本次激活是否已上报完播（视频 loop，靠此防重复）
+  const hooked = useRef(false); // 本次激活是否已上报前 5 秒钩子
 
   const src = post.mediaUrls[0] || post.mediaUrl || '';
+
+  // 进度埋点（被动，视频 loop 无 onEnded）：
+  //  - 过 5 秒 或 首个四分位（取较小）→ video_5s（黄金五秒钩子），一次
+  //  - 播到 ≥95% → video_complete，一次
+  const handleTimeUpdate = () => {
+    const v = videoRef.current;
+    if (!v || !v.duration) return;
+    if (!hooked.current && v.currentTime >= Math.min(5, v.duration * 0.25)) {
+      hooked.current = true;
+      trackPostEvent(post.id, 'video_5s');
+    }
+    if (!completed.current && v.currentTime / v.duration >= 0.95) {
+      completed.current = true;
+      trackPostEvent(post.id, 'video_complete');
+    }
+  };
 
   // 加载元数据后拿真实宽高比
   const handleLoadedMetadata = () => {
@@ -52,6 +71,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (!v) return;
     if (isActive) {
       v.currentTime = 0;
+      completed.current = false; // 重新激活 → 允许再次记完播
+      hooked.current = false; // 重新激活 → 允许再次记钩子
       const p = v.play();
       if (p && typeof p.catch === 'function') p.catch(() => {});
       setPaused(false);
@@ -123,6 +144,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         playsInline
         preload={preload}
         onLoadedMetadata={handleLoadedMetadata}
+        onTimeUpdate={handleTimeUpdate}
       />
 
       {/* 暂停图标 */}
