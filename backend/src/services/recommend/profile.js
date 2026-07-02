@@ -75,11 +75,14 @@ async function buildUserProfile(userId) {
     });
     const postMap = new Map(posts.map((p) => [p.id, p]));
 
+    const penaltySince = Date.now() - cfg.PENALTY.windowDays * 86_400_000;
     for (const e of events) {
       const post = postMap.get(e.targetId);
       if (!post) continue;
       if (e.eventType === 'skip') {
-        // 负反馈：进惩罚表，不进兴趣分
+        // 负反馈：进惩罚表，不进兴趣分。只看近期（PENALTY.windowDays），
+        // 否则 60 天窗口会把 cap 轻易灌满，惩罚变成永久标签。
+        if (new Date(e.createdAt).getTime() < penaltySince) continue;
         addScore(profile.skipAuthorCounts, post.authorId, 1);
         addScore(profile.skipCategoryCounts, post.category, 1);
         continue;

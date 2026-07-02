@@ -79,6 +79,26 @@ body {
   padding-right: var(--safe-right);
 }
 
+/* ───────── 下拉刷新容器修正（react-simple-pull-to-refresh）─────────
+   库默认给 .ptr / .ptr__children 设 overflow:hidden，会让容器成为内部
+   sticky 元素的“滚动容器”：首页 tab 栏（sticky top-16）因此被永久下顶
+   64px，表现为手机端首页顶部一片空白 + tab 压住卡片。
+   页面实际由 window 滚动（库的触发判断走 document.scrollingElement，
+   不依赖此 overflow），改回 visible 既消除空白又恢复吸顶。 */
+.ptr,
+.ptr__children {
+  overflow: visible !important;
+}
+
+/* 全站页面/面板淡入：多个组件使用 animate-fadeIn，但 Tailwind CDN 无此内置类，需自定义 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
 /* 沉浸式视频双击点赞爱心动画 */
 @keyframes likePop {
   0% { transform: scale(0.4); opacity: 0; }

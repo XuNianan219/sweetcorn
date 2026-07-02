@@ -46,12 +46,14 @@ function penalty(profile, post) {
   return cfg.PENALTY.skipAuthor * a + cfg.PENALTY.skipCategory * c;
 }
 
-// 多样性打散：同作者靠后条降权后重排
+// 多样性打散：同作者靠后条降权后重排。
+// 注意负分（被负反馈罚成负数）不能乘 0.5——负数乘 0.5 反而变大等于提权，改为除。
 function diversify(scored) {
   const seen = new Map();
   for (const it of scored) {
     const n = seen.get(it.post.authorId) || 0;
-    it.score *= Math.pow(0.5, n);
+    const f = Math.pow(0.5, n);
+    it.score = it.score > 0 ? it.score * f : it.score / f;
     seen.set(it.post.authorId, n + 1);
   }
   scored.sort((a, b) => b.score - a.score);
@@ -90,6 +92,36 @@ function reserveFreshContent(scored, limit) {
   return result;
 }
 
+// 对「已归一化的候选帖子」打分排序（步骤 2~5），供 /api/recommend/feed 和首页 /api/feed/discover 复用。
+// posts: [{ ...post, likeCount, commentCount }]；limit 控制新内容配额的窗口（传 posts.length 表示全量重排）。
+// 返回 [{ post, score, parts }]。
+async function rankCandidates(profile, posts, limit) {
+  // 内容质量（类目内归一化）
+  const qualityMap = await computeQuality(posts);
+
+  // 兴趣归一化基准
+  const norm = {
+    maxCat: Math.max(0, ...profile.categoryScores.values()),
+    maxTag: Math.max(0, ...profile.tagScores.values()),
+  };
+
+  // 综合打分：质量 × 匹配度 × 新鲜度 − 负反馈
+  let scored = posts.map((post) => {
+    const q = qualityMap.get(post.id) ?? 0.5;
+    const it = interest(profile, post, norm);
+    const fr = freshness(post);
+    const pen = penalty(profile, post);
+    const score = q * it * fr - pen;
+    return { post, score, parts: { q, it, fr, pen } };
+  });
+
+  // 排序 → 打散 → 新内容配额
+  scored.sort((a, b) => b.score - a.score);
+  scored = diversify(scored);
+  scored = reserveFreshContent(scored, limit);
+  return scored;
+}
+
 // userId + 可选 { mediaType, limit }。返回 { items, reason }。
 async function getFeedRecommendations(userId, opts = {}) {
   const limit = opts.limit || cfg.RESULT_LIMIT;
@@ -126,29 +158,8 @@ async function getFeedRecommendations(userId, opts = {}) {
   const reason =
     profile.categoryScores.size < cfg.COLD_START_MIN_TAGS ? 'cold_start' : 'personalized';
 
-  // 2. 内容质量（类目内归一化）
-  const qualityMap = await computeQuality(posts);
-
-  // 3. 兴趣归一化基准
-  const norm = {
-    maxCat: Math.max(0, ...profile.categoryScores.values()),
-    maxTag: Math.max(0, ...profile.tagScores.values()),
-  };
-
-  // 4. 综合打分：质量 × 匹配度 × 新鲜度 − 负反馈
-  let scored = posts.map((post) => {
-    const q = qualityMap.get(post.id) ?? 0.5;
-    const it = interest(profile, post, norm);
-    const fr = freshness(post);
-    const pen = penalty(profile, post);
-    const score = q * it * fr - pen;
-    return { post, score, parts: { q, it, fr, pen } };
-  });
-
-  // 5. 排序 → 打散 → 新内容配额 → 截断
-  scored.sort((a, b) => b.score - a.score);
-  scored = diversify(scored);
-  scored = reserveFreshContent(scored, limit);
+  // 2~5. 打分 → 排序 → 打散 → 新内容配额 → 截断
+  const scored = await rankCandidates(profile, posts, limit);
 
   const items = scored.slice(0, limit).map(({ post, score, parts }) => {
     const { _count, ...rest } = post;
@@ -166,4 +177,4 @@ async function getFeedRecommendations(userId, opts = {}) {
   return { items, reason };
 }
 
-module.exports = { getFeedRecommendations };
+module.exports = { getFeedRecommendations, rankCandidates };

@@ -33,6 +33,8 @@ interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
   body?: any;
   // 关掉自动 toast（少数场景如点赞乐观更新失败想自行处理）
   silent?: boolean;
+  // 覆盖默认 10s 超时（如 AI 客服回复较慢的接口）
+  timeoutMs?: number;
 }
 
 function authHeader(): Record<string, string> {
@@ -70,7 +72,7 @@ function redirectToLogin() {
  * 失败抛 ApiError，并默认弹出友好 toast。
  */
 export async function apiFetch<T = any>(url: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { body, silent, headers, ...rest } = options;
+  const { body, silent, headers, timeoutMs, ...rest } = options;
 
   // 断网直接拦截
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -95,7 +97,7 @@ export async function apiFetch<T = any>(url: string, options: ApiFetchOptions = 
 
   // 超时控制
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs ?? TIMEOUT_MS);
 
   let res: Response;
   try {

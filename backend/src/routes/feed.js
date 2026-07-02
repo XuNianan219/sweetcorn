@@ -3,6 +3,8 @@ const express = require('express');
 const prisma = require('../config/prisma');
 const requireAuth = require('../middleware/authMiddleware');
 const { verifyToken } = require('../services/tokenService');
+const { buildUserProfile } = require('../services/recommend/profile');
+const { rankCandidates } = require('../services/recommend/feedRank');
 
 const router = express.Router();
 
@@ -156,8 +158,10 @@ router.get('/following', requireAuth, async (req, res, next) => {
 });
 
 // GET /api/feed/discover —— 推荐流（可匿名访问）
-// 排序：热度分 = likeCount * 10 - 小时数(now - createdAt)
-// Prisma 不直接支持基于计算列的复合排序，所以先捞最近 POOL_SIZE 条，再在 Node 侧打分+分页
+// 帖子走推荐引擎 v2（质量 × 兴趣 × 新鲜度 − 负反馈 + 同作者打散 + 新内容配额，
+// 见 services/recommend/feedRank）；匿名用户画像为空，自然退化为「质量 × 新鲜度」冷启动。
+// 商品与帖子分数量纲不同，不直接混排比大小（否则商品永远霸屏或永远沉底），
+// 而是按自身热度排好后每隔固定槽位插入一个，类似信息流广告位。
 router.get('/discover', optionalAuth, async (req, res, next) => {
   try {
     const viewerUserId = req.user && req.user.userId ? req.user.userId : undefined;
@@ -165,18 +169,10 @@ router.get('/discover', optionalAuth, async (req, res, next) => {
 
     // TODO: 当总量 > 500 时需要升级方案（Redis zset / heatScore 列）
     const POOL_SIZE = 500;
+    const PRODUCT_SLOT_EVERY = 6; // 每 6 个位置留 1 个给商品（下标 2, 8, 14…）
 
-    // 关注加权：登录用户关注的人，其内容热度 +30
-    let followingSet = new Set();
-    if (viewerUserId) {
-      const follows = await prisma.follow.findMany({
-        where: { followerId: viewerUserId },
-        select: { followingId: true },
-      });
-      followingSet = new Set(follows.map((f) => f.followingId));
-    }
-
-    const [postRows, productRows] = await Promise.all([
+    const [profile, postRows, productRows] = await Promise.all([
+      buildUserProfile(viewerUserId),
       prisma.post.findMany({
         where: { deletedAt: null },
         orderBy: { createdAt: 'desc' },
@@ -190,22 +186,44 @@ router.get('/discover', optionalAuth, async (req, res, next) => {
       }),
     ]);
 
+    // 帖子：v2 引擎全量重排
+    const posts = postRows.map((p) => ({
+      ...p,
+      likeCount: p._count && typeof p._count.likes === 'number' ? p._count.likes : 0,
+      commentCount: p._count && typeof p._count.comments === 'number' ? p._count.comments : 0,
+    }));
+    const rankedPosts = (await rankCandidates(profile, posts, posts.length)).map((s) =>
+      toFeedItem(s.post),
+    );
+
+    // 商品：热度（想要数）× 3 天半衰期时间衰减，关注的卖家 ×1.5
     const now = Date.now();
-    const hoursOf = (d) => (now - new Date(d).getTime()) / 3600000;
+    const rankedProducts = productRows
+      .map((p) => {
+        const ageHours = (now - new Date(p.createdAt).getTime()) / 3600000;
+        const followBoost =
+          p.sellerId && profile.followingAuthorIds.has(p.sellerId) ? 1.5 : 1;
+        const score = (p.wantCount + 1) * Math.pow(0.5, ageHours / 72) * followBoost;
+        return { item: toProductItem(p), score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.item);
 
-    const scoredPosts = postRows.map((p) => {
-      const likeCount = p._count && typeof p._count.likes === 'number' ? p._count.likes : 0;
-      const follow = followingSet.has(p.authorId) ? 30 : 0;
-      return { item: toFeedItem(p), score: likeCount * 10 - hoursOf(p.createdAt) + follow };
-    });
-    const scoredProducts = productRows.map((p) => {
-      const follow = p.sellerId && followingSet.has(p.sellerId) ? 30 : 0;
-      return { item: toProductItem(p), score: (p.wantCount || 0) * 5 - hoursOf(p.createdAt) + follow };
-    });
+    // 固定槽位插入商品（两队列各自有序，合并结果对同样的数据是确定的，翻页不错乱）
+    const merged = [];
+    let pi = 0; // posts 指针
+    let gi = 0; // products 指针
+    while (pi < rankedPosts.length || gi < rankedProducts.length) {
+      const isProductSlot = merged.length % PRODUCT_SLOT_EVERY === 2;
+      if ((isProductSlot && gi < rankedProducts.length) || pi >= rankedPosts.length) {
+        merged.push(rankedProducts[gi++]);
+      } else {
+        merged.push(rankedPosts[pi++]);
+      }
+    }
 
-    const scored = [...scoredPosts, ...scoredProducts].sort((a, b) => b.score - a.score);
-    const total = scored.length;
-    const items = scored.slice(skip, skip + limit).map((x) => x.item);
+    const total = merged.length;
+    const items = merged.slice(skip, skip + limit);
     const hasMore = skip + items.length < total;
 
     res.json({ items, total, page, limit, hasMore });

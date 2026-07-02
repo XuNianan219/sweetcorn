@@ -8,7 +8,19 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(echo \"PID: $!\")"
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s \"http://localhost:4000/api/feed/discover?page=1&limit=12\")",
+      "Bash(python -c ' *)",
+      "Bash(curl -s \"http://localhost:4000/api/feed/discover?page=2&limit=12\")",
+      "Bash(grep -o \"^ANTHROPIC_API_KEY=.\\\\{0,6\\\\}\" \"c:/Users/xunia/Desktop/sweetcorn_leipeng/backend/.env\")",
+      "Bash(curl -s \"http://localhost:4000/api/feed/discover?page=2&limit=12\" -o /tmp/page2.json)",
+      "Read(//tmp/**)",
+      "Bash(curl -s 'http://localhost:4000/api/feed/discover?page=2&limit=12' -o C:/Users/xunia/AppData/Local/Temp/claude/c--Users-xunia-Desktop-sweetcorn-leipeng/62441d15-3470-494e-b8c4-f9fb08001e51/scratchpad/page2.json)",
+      "Bash(node site-sweep.js)",
+      "Bash(node cs-probe.js)",
+      "Bash(node ptr-probe.js)",
+      "Bash(MSYS_NO_PATHCONV=1 node mobile-shot.js / home-final.png 5000)",
+      "Bash(node -e ' *)"
     ]
   }
 }
